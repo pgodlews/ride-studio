@@ -2,7 +2,7 @@
 
 Create cycling, running and hiking videos from local camera footage and FIT/GPX activities. The studio includes a telemetry widget gallery, timeline editing, photos, manual map synchronization and MP4 export. All activity and media processing stays on your computer; street maps request tiles through a local cache.
 
-This is an early developer alpha for macOS (Apple silicon) and Linux (x64, tested on Ubuntu 24.04). The Electron application is runnable and can be packaged locally, but still requires the documented external FFmpeg and metadata tools. Installers are not signed/notarized. This branch is a curated source snapshot with no earlier Git history.
+This is an early developer alpha for macOS (Apple silicon) and Linux (x64, tested on Ubuntu 24.04 and 26.04). Windows (x64) support is experimental: it builds and passes its smoke test in CI but has not been tested on a real PC yet. The Electron application is runnable and can be packaged locally, but still requires the documented external FFmpeg and metadata tools. Installers are not signed/notarized. This branch is a curated source snapshot with no earlier Git history.
 
 ![Four HUD design families on a real ride](docs/images/real-hud-families.jpg)
 
@@ -31,6 +31,18 @@ npm run desktop
 
 `npm run desktop:package` builds an installable `.deb` and a `.tar.gz` under `studio/release/`. Exports use NVIDIA NVENC when available and libx264 otherwise.
 
+## Start on Windows (experimental)
+
+On Windows 10 or 11 with winget (App Installer), from PowerShell:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\setup-windows.ps1
+cd studio
+npm run desktop
+```
+
+The script installs Node.js, Python, FFmpeg and ExifTool with winget. `npm run desktop:package` builds a portable `.zip` under `studio\release\`; CI also attaches one to every run. Exports try NVIDIA NVENC, Intel Quick Sync and AMD AMF before falling back to libx264. The build is unsigned, so SmartScreen warns on first launch.
+
 ## Try it
 
 Use **File → Load synthetic demo** to try the editor without supplying any private files. The demo generates its own telemetry and test-pattern video. Import saved FIT/GPX activities from the Activities page and add videos/photos in the editor. The original files and previous exports are preserved.
@@ -56,6 +68,6 @@ The Python implementations remain developer reference/test tools. Running their 
 
 ## Distribution status
 
-The application currently uses installed FFmpeg/FFprobe and external Python/Pillow/ExifTool helpers for camera/photo/Apple Health metadata. Fully bundled dependencies, signed/notarized installers, older macOS/Intel acceptance, VAAPI/Quick Sync encoding on Linux, Linux arm64 and other distributions, Windows and automatic updates remain release work. See [FFmpeg build notes](packaging/ffmpeg/README.md).
+The application currently uses installed FFmpeg/FFprobe and external Python/Pillow/ExifTool helpers for camera/photo/Apple Health metadata. Fully bundled dependencies, signed/notarized installers, older macOS/Intel acceptance, VAAPI/Quick Sync encoding on Linux, Linux arm64 and other distributions, Windows acceptance on real hardware and automatic updates remain release work. See [FFmpeg build notes](packaging/ffmpeg/README.md).
 
 Project code is [MIT licensed](LICENSE). See [third-party notices](THIRD_PARTY_NOTICES.md). Existing fonts are retained in this alpha; their own license files apply. No private recordings, GPS traces, Garmin SDK binaries or third-party test corpus are included.

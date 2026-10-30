@@ -4,7 +4,7 @@ The Electron application lives in `studio/desktop/`. It runs the production Reac
 
 ## Supported setup
 
-The tested targets are macOS on Apple silicon and Linux x64 (Ubuntu 24.04 desktop, Debian trixie in CI). Node.js 24 is recommended (minimum 22.12). The macOS alpha has only an ad-hoc local signature; it is not Developer ID signed or notarized. The Linux `.deb` and archive are unsigned. Intel macOS, the oldest supported macOS version, Linux arm64, other distributions and Windows have not been accepted for release.
+The tested targets are macOS on Apple silicon and Linux x64 (Ubuntu 24.04 desktop, Debian trixie in CI). Node.js 24 is recommended (minimum 22.12). The macOS alpha has only an ad-hoc local signature; it is not Developer ID signed or notarized. The Linux `.deb` and archive are unsigned. Intel macOS, the oldest supported macOS version, Linux arm64 and other distributions have not been accepted for release. Windows x64 is experimental: GitHub Actions builds it on `windows-latest`, runs the type check, backend and preview-proxy suites and the Electron smoke export, and uploads a portable zip, but it has not been tested on a real PC.
 
 From a clean checkout on macOS with Homebrew already installed:
 
@@ -26,6 +26,10 @@ npm run desktop
 The macOS setup script installs Node 24, Python 3.13, FFmpeg and ExifTool with Homebrew; creates the repository `.venv`; installs exactly pinned Pillow from `requirements-runtime.txt`; installs the npm lockfile and builds the production application. The Linux script installs FFmpeg, ExifTool and `python3-venv` with apt, creates the same `.venv` and pinned Pillow environment, fetches the pinned Electron runtime if npm skipped its install script, and, where AppArmor restricts unprivileged user namespaces (Ubuntu 23.10 and later), makes the development `chrome-sandbox` helper root-owned and setuid so Electron keeps its sandbox. The Garmin FIT SDK is not needed to run the application. `requirements.txt` remains a separate developer/reference-test environment.
 
 For the web development UI, run `npm run demo` then `npm run dev` from `studio/`. The demo's readings, route near the equator and test-pattern video are generated and explicitly labelled synthetic. It never reads a private activity or camera share and does not overwrite an existing default demo.
+
+## Windows (experimental)
+
+`scripts/setup-windows.ps1` installs Node.js LTS, Python 3.13, FFmpeg (Gyan build) and ExifTool with winget, creates `.venv` with the pinned Pillow, installs the npm lockfile and builds the application. Python helpers use `.venv\Scripts\python.exe`, a packaged runtime at `%APPDATA%\Ride Studio\runtime\Scripts\python.exe`, or `python` on PATH. The desktop app probes `h264_nvenc`, `h264_qsv` and `h264_amf` with the real export settings and falls back to libx264; a hardware encoder that fails before the first frame is retried with libx264. `npm run desktop:package` writes `release\ride-studio-<version>-win32-x64\` with `Ride Studio.exe` and a zip of it, using the `tar` built into Windows. The executable keeps Electron's file icon (the window and taskbar use the Ride Studio icon while running), and builds are unsigned. The USB/MTP helper and the Encoder-fallback test (which uses a POSIX shell wrapper) are not available on Windows.
 
 ## Using the application
 

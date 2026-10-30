@@ -2,7 +2,7 @@
 
 | Area | Supported / verified | Limits |
 | --- | --- | --- |
-| Desktop | macOS Apple silicon; Linux x64 (Ubuntu 24.04 and 26.04 `.deb`/archive including GNOME Wayland, Debian trixie CI); production Electron UI, local library and native HUD export | Unsigned developer alpha; external media/metadata tools required; Linux hardware encode is NVENC only (VAAPI/Quick Sync pending); Intel/oldest macOS, Linux arm64/other distributions and Windows acceptance pending |
+| Desktop | macOS Apple silicon; Linux x64 (Ubuntu 24.04 and 26.04 `.deb`/archive including GNOME Wayland, Debian trixie CI); Windows x64 experimental (CI build and smoke only); production Electron UI, local library and native HUD export | Unsigned developer alpha; external media/metadata tools required; Linux hardware encode is NVENC only (VAAPI/Quick Sync pending); Intel/oldest macOS, Linux arm64/other distributions and Windows real-hardware acceptance pending |
 | Activities | Single-session outdoor FIT and timestamped GPX with usable GPS | Indoor/GPS-free routes and multisport splitting excluded; unknown fields retained; missing channels remain missing |
 | Phone / ordinary video | Import, browser preview conversion where needed, clock placement and manual map pin | Approximate sync; camera clock, trimming and long-clip drift need visual checks; no slow-motion/timelapse or HDR/log guarantee |
 | Garmin front/rear | Original video and GLV preview, safe framing, explicit corrections, rear inset | Radar speeds exist in pixels; no structured radar time series/OCR implementation |

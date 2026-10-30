@@ -1,5 +1,5 @@
 // Developer packages using the pinned Electron runtime and the platform's own tools:
-// macOS uses Apple's ditto/PlistBuddy/codesign; Linux uses tar and dpkg-deb.
+// macOS uses Apple's ditto/PlistBuddy/codesign; Linux uses tar and dpkg-deb; Windows uses the bundled tar for a zip.
 // Avoids packaging dependencies outside the repository's permissive-license policy.
 import { chmodSync, cpSync, existsSync, mkdirSync, readFileSync, renameSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
@@ -13,7 +13,7 @@ const require = createRequire(import.meta.url);
 const electronRoot = dirname(require.resolve('electron/package.json'));
 const executable = require('electron');
 // Proves the pinned runtime executes. On Linux, Node mode avoids starting Chromium's sandbox in containers.
-if (process.platform === 'linux') await run(executable, ['--version'], { env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' } });
+if (process.platform !== 'darwin') await run(executable, ['--version'], { env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' } });
 else await run(process.execPath, [join(electronRoot, 'cli.js'), '--version']);
 const version = JSON.parse(readFileSync(join(studio, 'package.json'))).version;
 // SemVer pre-releases (0.1.0-alpha.1): Debian sorts '~' before the final release and reserves '-' for the
@@ -197,6 +197,39 @@ Description: Local cycling and outdoor telemetry video studio (developer alpha)
   console.log('Unsigned developer builds for local testing.');
 }
 
+async function packageWindows() {
+  const name = `ride-studio-${version}-win32-${process.arch}`;
+  const release = join(studio, 'release');
+  const app = join(release, name);
+  mkdirSync(release, { recursive: true });
+  // This is our generated output only; original media/activity libraries are elsewhere.
+  rmSync(app, { recursive: true, force: true });
+  cpSync(dirname(executable), app, { recursive: true });
+  renameSync(join(app, 'electron.exe'), join(app, 'Ride Studio.exe'));
+  rmSync(join(app, 'resources', 'default_app.asar'), { force: true });
+  cpSync(join(studio, 'desktop-dist'), join(app, 'resources', 'app'), { recursive: true });
+  // Window and taskbar icon while running; the .exe keeps Electron's file icon (no resource editing tool).
+  await run('ffmpeg', ['-v', 'error', '-i', join(studio, 'desktop/icon.svg'), '-frames:v', '1', '-y', join(app, 'resources', 'app', 'icon.png')]);
+  copyElectronLicenses(app);
+  rmSync(join(app, 'LICENSE'), { force: true }); // Electron's, now ELECTRON-LICENSE.txt; the project license is in resources\app.
+  writeFileSync(join(app, 'README-WINDOWS.txt'), `Ride Studio ${version} developer alpha for Windows (${process.arch})\r
+\r
+Extract the folder anywhere and run "Ride Studio.exe". The build is unsigned, so\r
+Windows SmartScreen may warn on first launch: choose More info, then Run anyway.\r
+\r
+FFmpeg must be on PATH (winget install Gyan.FFmpeg). ExifTool and Python 3 with\r
+Pillow are needed for camera/photo/Apple Health metadata; FIT and GPX need neither.\r
+`);
+  const zip = join(release, `${name}.zip`);
+  rmSync(zip, { force: true });
+  // Windows 10+ ships bsdtar, which writes a zip from the archive's extension.
+  await run('tar', ['-a', '-c', '-f', zip, '-C', release, name]);
+  console.log(`Developer-alpha application: ${app}`);
+  console.log(`Archive: ${zip}`);
+  console.log('Unsigned developer build for local testing.');
+}
+
 if (process.platform === 'darwin') await packageMac();
 else if (process.platform === 'linux') await packageLinux();
+else if (process.platform === 'win32') await packageWindows();
 else throw new Error(`Desktop packaging is not implemented for ${process.platform}`);

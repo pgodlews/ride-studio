@@ -211,7 +211,7 @@ async function runExport(paths: StudioPaths, job: Job, project: Project, origin:
       // The startup probe only shows the encoder opened once. A later session can still fail
       // before any frame (NVENC session limit, driver). Retry that one encode with libx264.
       const failed = error as Error & { code?: number | null; signal?: NodeJS.Signals | null; stderr?: string; frames?: number };
-      const hardware = encoder === 'h264_nvenc' || encoder === 'h264_videotoolbox';
+      const hardware = encoder !== 'libx264';
       if (!(hardware && failed.frames === 0 && typeof failed.code === 'number' && failed.code !== 0 && !failed.signal)) throw error;
       const first = ((failed.stderr ?? '').split('\n')[0] ?? '').replace(/\r$/, '');
       job.log.push(`Hardware encoder ${encoder} failed (${first}); retried with libx264`);
