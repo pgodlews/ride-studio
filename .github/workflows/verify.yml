@@ -1,0 +1,74 @@
+name: Verify studio and desktop alpha
+on:
+  push:
+    branches: [main, 'release/**']
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    container: node:24-trixie
+    timeout-minutes: 30
+    env:
+      STUDIO_CHROME: /tmp/ride-ci-chromium
+      STUDIO_HUD_WORKERS: '2'
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Install test tools and locked dependencies
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends python3-venv ffmpeg libimage-exiftool-perl chromium chromium-sandbox xvfb xauth
+          # Docker runner cannot create Chromium's extra namespaces. This wrapper is CI-only;
+          # production Electron retains its sandbox and never uses this launcher.
+          printf '%s\n' '#!/bin/sh' 'exec /usr/bin/chromium --no-sandbox "$@"' > /tmp/ride-ci-chromium
+          chmod 755 /tmp/ride-ci-chromium
+          python3 -m venv .venv
+          .venv/bin/python -m pip install -r requirements.txt
+          npm --prefix studio ci
+          [ -f studio/node_modules/electron/path.txt ] || node studio/node_modules/electron/install.js
+          chmod -R a+rwX .
+      - name: Type check and build production applications
+        run: |
+          npm --prefix studio run typecheck
+          npm --prefix studio run build
+          npm --prefix studio run desktop:build
+      - name: Python references and importer parity
+        run: |
+          export STUDIO_PYTHON="$PWD/.venv/bin/python"
+          export PYTHON="$STUDIO_PYTHON"
+          "$STUDIO_PYTHON" -m unittest discover -s studio/scripts -p 'test_*.py'
+          for suite in fit gpx apple_health photo pyround; do
+            node "studio/scripts/test_${suite}_port.mjs"
+          done
+      - name: Backend, widgets and real export regressions
+        run: |
+          # Root-owned build/reference loaders may create Vite cache entries after installation.
+          # Chromium runs as the unprivileged node user; keep the shared workspace/cache owned by it.
+          chown -R node:node .
+          for suite in desktop_server activity_studio gpx_studio dji_studio camera_studio phone_studio photo_studio media_studio usb_mtp foot_widgets astra_review garmin_preview encoder_fallback; do
+            runuser -u node -- env STUDIO_PYTHON="$PWD/.venv/bin/python" PYTHON="$PWD/.venv/bin/python" STUDIO_CHROME=/tmp/ride-ci-chromium STUDIO_HUD_WORKERS=2 node "studio/scripts/test_${suite}.mjs"
+          done
+      - name: Electron desktop smoke and Linux packages
+        working-directory: studio
+        run: |
+          # Docker runner cannot create Chromium's sandbox namespaces; --no-sandbox is CI-only,
+          # like the Chromium launcher above. Installed .deb builds keep the setuid sandbox helper.
+          runuser -u node -- xvfb-run -a node_modules/.bin/electron desktop-dist --smoke --no-sandbox --profile=/tmp/ride-ci-desktop
+          runuser -u node -- npm run desktop:package
+          dpkg-deb --info release/ride-studio_*_amd64.deb
+          # Not grep -q: exiting early would break dpkg-deb's pipe and fail the step.
+          dpkg-deb --contents release/ride-studio_*_amd64.deb | grep -- '-rwsr-xr-x root/root .*/usr/lib/ride-studio/chrome-sandbox$'
+          runuser -u node -- xvfb-run -a release/ride-studio-*-linux-x64/ride-studio --smoke --no-sandbox --profile=/tmp/ride-ci-packaged
+          # Install the .deb as users do: resolves its Depends and checks the /usr/bin launcher layout.
+          apt-get install -y ./release/ride-studio_*_amd64.deb
+          runuser -u node -- xvfb-run -a ride-studio --smoke --no-sandbox --profile=/tmp/ride-ci-installed
+      - name: Whitespace and dependency audit
+        run: |
+          runuser -u node -- git diff --check
+          runuser -u node -- npm --prefix studio audit --audit-level=high
+          runuser -u node -- node studio/scripts/check_licenses.mjs

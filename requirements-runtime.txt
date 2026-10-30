@@ -1,0 +1,2 @@
+# Camera/photo helper runtime only. The proprietary FIT SDK is not an application dependency.
+Pillow==12.3.0
