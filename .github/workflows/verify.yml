@@ -90,22 +90,20 @@ jobs:
       - name: Install FFmpeg and locked dependencies
         run: |
           choco install ffmpeg -y --no-progress
-          $env:Path = [Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' + $env:Path
           ffmpeg -hide_banner -version | Select-Object -First 1
+          node -v
           npm --prefix studio ci
           if (-not (Test-Path studio/node_modules/electron/path.txt)) { node studio/node_modules/electron/install.js }
       - name: Type check, backend and preview-proxy tests, Electron smoke
         env:
           STUDIO_HUD_WORKERS: '2'
         run: |
-          $env:Path = [Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' + $env:Path
           npm --prefix studio run typecheck
           node studio/scripts/test_desktop_server.mjs
           node studio/scripts/test_garmin_preview.mjs
           npm --prefix studio run desktop:smoke
       - name: Package the Windows zip
         run: |
-          $env:Path = [Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' + $env:Path
           npm --prefix studio run desktop:package
           Get-ChildItem studio/release/*.zip | Format-Table Name, Length
       - name: Upload the developer-alpha zip

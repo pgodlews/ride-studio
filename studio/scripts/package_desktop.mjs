@@ -125,7 +125,7 @@ async function packageLinux() {
   rmSync(join(app, 'resources', 'default_app.asar'), { force: true });
   cpSync(join(studio, 'desktop-dist'), join(app, 'resources', 'app'), { recursive: true });
   // Window and taskbar icon; desktop environments use the scalable SVG from the .desktop entry.
-  await run('ffmpeg', ['-v', 'error', '-i', join(studio, 'desktop/icon.svg'), '-frames:v', '1', '-y', join(app, 'resources', 'app', 'icon.png')]);
+  cpSync(join(studio, 'desktop/icon.png'), join(app, 'resources', 'app', 'icon.png'));
   cpSync(join(studio, 'desktop/icon.svg'), join(app, 'ride-studio.svg'));
   copyElectronLicenses(app);
   rmSync(join(app, 'LICENSE')); // Electron's, now ELECTRON-LICENSE.txt; the project license is in resources/app.
@@ -209,7 +209,7 @@ async function packageWindows() {
   rmSync(join(app, 'resources', 'default_app.asar'), { force: true });
   cpSync(join(studio, 'desktop-dist'), join(app, 'resources', 'app'), { recursive: true });
   // Window and taskbar icon while running; the .exe keeps Electron's file icon (no resource editing tool).
-  await run('ffmpeg', ['-v', 'error', '-i', join(studio, 'desktop/icon.svg'), '-frames:v', '1', '-y', join(app, 'resources', 'app', 'icon.png')]);
+  cpSync(join(studio, 'desktop/icon.png'), join(app, 'resources', 'app', 'icon.png'));
   copyElectronLicenses(app);
   rmSync(join(app, 'LICENSE'), { force: true }); // Electron's, now ELECTRON-LICENSE.txt; the project license is in resources\app.
   writeFileSync(join(app, 'README-WINDOWS.txt'), `Ride Studio ${version} developer alpha for Windows (${process.arch})\r
