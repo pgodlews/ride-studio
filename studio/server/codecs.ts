@@ -28,3 +28,13 @@ export async function detectHardwareEncoder(platform = process.platform): Promis
   }
   return 'libx264';
 }
+
+/** Check the audio-delay option used by every export before starting HUD capture. */
+export async function checkExportCapabilities(): Promise<void> {
+  try {
+    await promisify(execFile)(ffmpegPath(), ['-hide_banner', '-v', 'error', '-f', 'lavfi', '-i',
+      'anullsrc=r=48000:cl=stereo', '-af', 'adelay=0:all=1', '-t', '0.01', '-f', 'null', '-'], { timeout: 10000 });
+  } catch {
+    throw new Error('FFmpeg is unavailable or incompatible: export requires the adelay all option. Install a current FFmpeg build (6.1.1 passed Windows testing), or set STUDIO_FFMPEG to a compatible executable. Run Check setup in Ride Studio.');
+  }
+}

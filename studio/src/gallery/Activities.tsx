@@ -30,6 +30,16 @@ async function uploadActivity(name: string, body: Blob | Uint8Array, sidecar?: F
 }
 
 export function Activities({ demo }: { demo: boolean }) {
+  const [desktop, setDesktop] = useState<boolean | null>(null);
+  useEffect(() => {
+    let active = true;
+    void fetch('/api/capabilities').then(async (r) => {
+      const capabilities = r.ok ? await r.json() : null;
+      if (active && typeof capabilities?.desktop === 'boolean') setDesktop(capabilities.desktop);
+    }).catch(() => { /* Capability unknown: keep device access disabled. */ });
+    return () => { active = false; };
+  }, []);
+  const canUsb = desktop === false && !!usb;
   const [rides, setRides] = useState<RideSummary[] | null>(null);
   const [log, setLog] = useState<{ text: string; rideId?: string; error?: boolean }[]>([]);
   const [busy, setBusy] = useState('');
@@ -58,6 +68,7 @@ export function Activities({ demo }: { demo: boolean }) {
   };
 
   const connect = async () => {
+    if (!canUsb) return;
     if (!usb) return;
     let reader: MtpReader | null = null;
     try {
@@ -100,11 +111,12 @@ export function Activities({ demo }: { demo: boolean }) {
         <nav className="pages"><span className="dot" /><button className="on">Activities</button>{demo && <a className="link" href="/">Demo ride</a>}</nav>
         <div className="controls">
           <button className="primary" disabled={!!busy} onClick={() => picker.current?.click()}>Import activity / video…</button>
-          <button className="primary" disabled={!!busy || !usb} title={usb ? 'Read activities from a USB-connected Garmin (read-only)' : 'WebUSB needs Chrome on localhost'} onClick={() => void connect()}>Connect Garmin (USB)</button>
+          <button className="primary" disabled={!!busy || !canUsb} title={desktop ? 'Desktop USB is unavailable. Import saved FIT/GPX files instead.' : 'Read activities in Chrome on localhost (read-only)'} onClick={() => void connect()}>Connect Garmin (USB)</button>
         </div>
         <input ref={picker} type="file" multiple accept=".fit,.gpx,.srt,video/*,.mkv,.avi,.mts,.m2ts,.3gp" hidden onChange={(e) => { const f = [...(e.target.files ?? [])]; e.target.value = ''; void importFiles(f); }} />
       </header>
       <main className="activities-main">
+        {desktop && <p className="hint">USB access is unavailable in the desktop alpha. Import saved FIT/GPX files instead.</p>}
         <p className="hint">Drop FIT/GPX activities or camera videos here. GoPro, DJI and EXIF metadata are detected automatically; recorded camera GPS supplies a route when available. Include a matching DJI SRT alongside its video. For workout sensors or clips without GPS, open a matching activity and add your videos and photos in the editor.</p>
         {busy && <div className="banner">{busy}</div>}
         {log.map((l, i) => (

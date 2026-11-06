@@ -6,7 +6,7 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { startDesktopServer } from '../server/desktopServer';
 import { createDemo } from '../server/demo';
-import { detectHardwareEncoder, ffmpegPath, ffprobePath } from '../server/codecs';
+import { detectHardwareEncoder, ffmpegPath, ffprobePath, checkExportCapabilities } from '../server/codecs';
 import { studioPython, venvPython } from '../server/activities';
 import { stopExports } from '../server/export';
 import { FORMATS } from '../src/core/framing';
@@ -72,11 +72,13 @@ const renderHud: typeof startHudRenderer = async (o) => {
 
 async function checkSetup() {
   const run = promisify(execFile);
-  const checks = [[ffmpegPath(), ['-version']], [ffprobePath(), ['-version']], [studioPython(backend.paths), ['-c', 'import PIL; print("Pillow " + PIL.__version__)']], ['exiftool', ['-ver']]] as const;
+  const checks = [[ffmpegPath(), ['-version']], [ffprobePath(), ['-version']], [studioPython(backend.paths), ['-c', 'import PIL; from zoneinfo import ZoneInfo; ZoneInfo("Europe/London"); print("Pillow " + PIL.__version__ + "; IANA timezones available")']], [process.env.STUDIO_EXIFTOOL ?? 'exiftool', ['-ver']]] as const;
   const lines = await Promise.all(checks.map(async ([command, args]) => {
     try { const { stdout } = await run(command, [...args], { timeout: 10000 }); return `${command}: ${stdout.split('\n')[0]}`; }
-    catch { return `${command}: unavailable (camera/photo import needs Python + Pillow + ExifTool)`; }
+    catch { return `${command}: unavailable. Install the documented tools; Python needs Pillow and tzdata. Use File → Choose Python environment or the STUDIO_PYTHON / STUDIO_FFMPEG / STUDIO_FFPROBE / STUDIO_EXIFTOOL overrides`; }
   }));
+  try { await checkExportCapabilities(); lines.push('Export audio filter: compatible'); }
+  catch (e) { lines.push((e as Error).message); }
   lines.push(`H.264 encoder: ${process.env.STUDIO_VIDEO_ENCODER ?? 'libx264'}`);
   await dialog.showMessageBox({ type: 'info', title: 'Setup check', message: lines.join('\n'), detail: 'FIT and GPX imports run in TypeScript. Camera/photo and Apple Health helpers still need the documented external tools in this developer alpha.' });
 }
@@ -114,7 +116,7 @@ app.whenReady().then(async () => {
       { label: 'Activities', click: () => { void main?.loadURL(`${backend.origin}/?activities`); } },
       { label: 'Load synthetic demo', click: async () => { try { const id = await createDemo(dataRoot); await main?.loadURL(`${backend.origin}/?ride=${id}`); } catch (e) { dialog.showErrorBox('Could not create demo', String(e)); } } },
       { label: 'Choose camera folder…', click: async () => { const result = await dialog.showOpenDialog({ properties: ['openDirectory'] }); if (!result.canceled) { backend.paths.mediaRoot = result.filePaths[0]; settings.mediaRoot = backend.paths.mediaRoot; writeFileSync(settingsFile, JSON.stringify(settings)); main?.webContents.reload(); } } },
-      { label: 'Choose Python environment…', click: async () => { const result = await dialog.showOpenDialog({ title: 'Select the Python executable from an environment with Pillow installed', properties: ['openFile'] }); if (!result.canceled) { settings.python = result.filePaths[0]; process.env.STUDIO_PYTHON = settings.python; writeFileSync(settingsFile, JSON.stringify(settings)); } } },
+      { label: 'Choose Python environment…', click: async () => { const result = await dialog.showOpenDialog({ title: 'Select the Python executable from an environment with Pillow and tzdata installed', properties: ['openFile'] }); if (!result.canceled) { settings.python = result.filePaths[0]; process.env.STUDIO_PYTHON = settings.python; writeFileSync(settingsFile, JSON.stringify(settings)); } } },
       { label: 'Open library folder', click: () => { void shell.openPath(dataRoot); } },
       { label: 'Open exports folder', click: () => { mkdirSync(backend.paths.exports, { recursive: true }); void shell.openPath(backend.paths.exports); } },
     ] }, { role: 'editMenu' }, { role: 'viewMenu' }, { role: 'windowMenu' },

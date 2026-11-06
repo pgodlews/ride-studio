@@ -108,7 +108,7 @@ try {
   const paths = { studio: temp, mediaRoot: join(temp, 'unmounted'), cache: join(temp, '.cache'), exports: join(temp, 'exports') };
   mkdirSync(join(temp, 'public/data/rides'), { recursive: true });
   mkdirSync(paths.cache);
-  for (const dir of ['src', 'node_modules']) symlinkSync(join(studio, dir), join(temp, dir));
+  for (const dir of ['src', 'node_modules']) symlinkSync(join(studio, dir), join(temp, dir), process.platform === 'win32' ? 'junction' : 'dir');
   writeFileSync(join(temp, 'public/data/rides/astra-test.json'), JSON.stringify(fixture));
   const generate = (name, colour, duration, audio = false) => {
     const path = join(temp, name);

@@ -4,7 +4,7 @@ The Electron application lives in `studio/desktop/`. It runs the production Reac
 
 ## Supported setup
 
-The tested targets are macOS on Apple silicon and Linux x64 (Ubuntu 24.04 desktop, Debian trixie in CI). Node.js 24 is recommended (minimum 22.12). The macOS alpha has only an ad-hoc local signature; it is not Developer ID signed or notarized. The Linux `.deb` and archive are unsigned. Intel macOS, the oldest supported macOS version, Linux arm64 and other distributions have not been accepted for release. Windows x64 is experimental: GitHub Actions builds it on `windows-latest`, runs the type check, backend and preview-proxy suites and the Electron smoke export, and uploads a portable zip, but it has not been tested on a real PC.
+The tested targets are macOS on Apple silicon and Linux x64 (Ubuntu 24.04 desktop, Debian trixie in CI). Node.js 24 is recommended (minimum 22.12). The macOS alpha has only an ad-hoc local signature; it is not Developer ID signed or notarized. The Linux `.deb` and archive are unsigned. Intel macOS, the oldest supported macOS version, Linux arm64 and other distributions have not been accepted for release. Windows x64 remains experimental after partial Windows 11 synthetic testing. GitHub Actions builds and tests it on `windows-latest` and uploads a portable ZIP; clean-machine setup and real-media acceptance remain pending.
 
 From a clean checkout on macOS with Homebrew already installed:
 
@@ -29,10 +29,24 @@ For the web development UI, run `npm run demo` then `npm run dev` from `studio/`
 
 ## Windows (experimental)
 
-`scripts/setup-windows.ps1` installs Node.js LTS, Python 3.13, FFmpeg (Gyan build) and ExifTool with winget, creates `.venv` with the pinned Pillow, installs the npm lockfile and builds the application. Python helpers use `.venv\Scripts\python.exe`, a packaged runtime at `%APPDATA%\Ride Studio\runtime\Scripts\python.exe`, or `python` on PATH. The desktop app probes `h264_nvenc`, `h264_qsv` and `h264_amf` with the real export settings and falls back to libx264; a hardware encoder that fails before the first frame is retried with libx264. `npm run desktop:package` writes `release\ride-studio-<version>-win32-x64\` with `Ride Studio.exe` and a zip of it, using the `tar` built into Windows. The executable keeps Electron's file icon (the window and taskbar use the Ride Studio icon while running), and builds are unsigned. The USB/MTP helper and the Encoder-fallback test (which uses a POSIX shell wrapper) are not available on Windows.
+`scripts/setup-windows.ps1` installs Node.js LTS, Python 3.13, FFmpeg (Gyan build) and ExifTool with winget, creates `.venv` with pinned Pillow and tzdata, installs the npm lockfile and builds the application. Python helpers use `.venv\Scripts\python.exe`, a packaged runtime at `%APPDATA%\Ride Studio\runtime\Scripts\python.exe`, or `python` on PATH. The desktop app probes `h264_nvenc`, `h264_qsv` and `h264_amf` with the real export settings and falls back to libx264; a hardware encoder that fails before the first frame is retried with libx264. `npm run desktop:package` writes `release\ride-studio-<version>-win32-x64\` with `Ride Studio.exe` and a zip of it, using the `tar` built into Windows. The executable keeps Electron's file icon (the window and taskbar use the Ride Studio icon while running), and builds are unsigned. Desktop USB remains unavailable; import saved FIT/GPX files instead. The separate Chrome workflow remains read-only. The encoder-fallback regression now uses a portable Node test double.
+
+## FFmpeg compatibility and recovery
+
+FFmpeg must provide the `adelay` filter's `all` option. **Check setup…** and each export
+run a short audio-filter probe; an incompatible or missing build is reported before HUD
+capture or encoding. FFmpeg 6.1.1 passed Windows 11 exports; a 2018 build did not.
+This is a capability requirement, not a claim that every build with a particular version
+has been accepted. Install a current build or select compatible FFmpeg/FFprobe executables
+with `STUDIO_FFMPEG` / `STUDIO_FFPROBE`.
+
+Missing Python, FFprobe or ExifTool during camera import now identifies the tool and a
+setup action. Windows runtime environments need both Pillow and the pinned `tzdata`;
+install `requirements-runtime.txt` or rerun the setup script.
 
 ## Using the application
 
+- **Auto-edit → Build timeline** preserves the existing timeline and explains why when no moments qualify. Replacing a nonempty timeline requires confirmation; cancellation preserves the saved edits.
 - **Activities** accepts FIT and timestamped GPX files through the TypeScript importers. Camera videos use the existing metadata helpers. Still photos are imported in the editor.
 - **File → Load synthetic demo** creates a demonstration in the application's own library and opens it. Arrange widgets, select a video passage in the editor and export an MP4.
 - **File → Choose camera folder…** selects the directory containing `new-front` and `new-back`. It remembers the path and reads the camera originals in place; it does not copy the share.
@@ -48,9 +62,9 @@ The desktop library is under `~/Library/Application Support/Ride Studio/library`
 | FIT / GPX activity import | Bundled TypeScript; no Python or proprietary Garmin SDK |
 | Gallery, editor, telemetry, HUD capture | Electron and bundled application code; no external Chrome |
 | Video encode/decode | Installed FFmpeg/FFprobe and AAC; macOS desktop uses `h264_videotoolbox`; Linux desktop uses `h264_nvenc` when a probe encode succeeds, otherwise `libx264` |
-| Camera metadata, photos and Apple Health | Existing Python helpers; camera/photo metadata also uses ExifTool and Pillow |
+| Camera metadata, photos and Apple Health | Existing Python helpers; camera/photo metadata also uses ExifTool, Pillow and IANA timezone data (`tzdata` fallback) |
 
-For a packaged `.app`, install the external tools and choose the repository `.venv/bin/python` with the File menu. Alternatively create a runtime environment at `~/Library/Application Support/Ride Studio/runtime` and install `requirements-runtime.txt` there. `STUDIO_PYTHON`, `STUDIO_FFMPEG` and `STUDIO_FFPROBE` can explicitly select executables. An optional `Resources/tools` directory takes precedence in the application PATH, but the package command does not copy installed system binaries. The Linux `.deb` depends on the distribution `ffmpeg` and recommends `libimage-exiftool-perl` and `python3-pil`, so the packaged application can use the system `python3`; a runtime environment at `~/.config/Ride Studio/runtime` or the File menu selection also work.
+For a packaged `.app`, install the external tools and choose the repository `.venv/bin/python` with the File menu. Alternatively create a runtime environment at `~/Library/Application Support/Ride Studio/runtime` and install `requirements-runtime.txt` there. `STUDIO_PYTHON`, `STUDIO_FFMPEG`, `STUDIO_FFPROBE` and `STUDIO_EXIFTOOL` can explicitly select executables. All Python media helpers honor these overrides too. The runtime and reference requirements pin `tzdata` 2026.6 so IANA timezone names work on Windows as well as systems with a timezone database. An optional `Resources/tools` directory takes precedence in the application PATH, but the package command does not copy installed system binaries. The Linux `.deb` depends on the distribution `ffmpeg` and recommends `libimage-exiftool-perl` and `python3-pil`, so the packaged application can use the system `python3`; a runtime environment at `~/.config/Ride Studio/runtime` or the File menu selection also work.
 
 The application uses hardware H.264 on macOS. The web developer backend retains `libx264` by default for existing reference comparisons; `STUDIO_VIDEO_ENCODER=h264_videotoolbox` selects the LGPL-compatible hardware path there too. Video preview transcodes use the same encoder selection. On Linux the desktop application probes `h264_nvenc` with a tiny encode at startup, because a distribution FFmpeg lists NVENC whether or not an NVIDIA GPU and driver are present, and falls back to `libx264`. `STUDIO_VIDEO_ENCODER` overrides the choice, and **Check setup…** and the smoke output report it. VAAPI and Quick Sync are not wired in yet: they need hardware-upload filters in each FFmpeg graph. Linux decoding stays in software; the VideoToolbox decoder request is macOS-only.
 
@@ -79,6 +93,28 @@ Gitea verification is defined in `.gitea/workflows/verify.yml`: locked installat
 The Linux Gitea export tests run Chromium as an unprivileged user inside a disposable container. A CI-only launcher disables Chromium’s extra process sandbox because the Docker runner cannot create those namespaces; this launcher is not packaged or used by the application. The workflow also runs the Electron smoke under Xvfb, builds the Linux packages, checks the packaged setuid sandbox helper, smoke-tests the packaged binary, then installs the `.deb` with apt (resolving its dependencies) and smoke-tests the installed `/usr/bin/ride-studio`. These Electron runs pass `--no-sandbox` for the same container reason; the GPU-less runner exercises the `libx264` fallback. The default launchers never pass that flag, although a user can still add it by hand. Electron’s process sandbox is exercised only by manual runs: the macOS application smoke and the installed Linux `.deb` smoke recorded below. Every smoke checks that the UI has no Node access (`window.require` is undefined); context isolation itself is set in the window preferences rather than asserted by the smoke.
 
 Tile attribution is fetched from the local backend for the UI and passed into each native HUD export, so a packaged app can change its configured provider without rebuilding its assets. The native smoke includes an entirely hidden map and checks the runtime attribution.
+
+## Windows 11 testing reported on 6 November 2026
+
+The supplied test report covered the original Windows branch, before the follow-up fixes.
+Development and packaged synthetic smoke exports passed with FFmpeg 6.1.1, including
+forced libx264 and a profile path with spaces and Unicode. A 12-second GUI export had
+360 frames at 1080 × 1920, H.264/AAC, 12.0 seconds, and decoded fully. One AMD AMF
+smoke output was independently identified by its encoder tag. Synthetic activity import,
+saved settings/timeline restoration and several metadata/export suites also passed with
+the required tools installed; some test harnesses required temporary portability fixes.
+
+Follow-up changes honor tool overrides, install timezone data, check the required audio
+filter, disable desktop USB with saved-file guidance, make the reported harnesses portable,
+and preserve timelines when auto-edit has no eligible picks. Windows CI now checks each
+native command's exit status, runs the reference/parity and affected regression suites,
+and smoke-tests the extracted ZIP with a separate profile. These checks do not replace
+real-device or clean-machine acceptance.
+
+Still unverified: the complete winget setup (including Python 3.13), a clean Windows
+installation, real recordings/devices, Intel Quick Sync and NVIDIA Windows hardware,
+long media/drift, disk-full recovery, full privacy/DPI/input matrices and SmartScreen.
+Python 3.12 was used for the reported manual Windows tests. Windows remains experimental.
 
 ## Validation recorded on 30 October 2026 (Linux)
 

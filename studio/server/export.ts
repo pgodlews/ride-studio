@@ -1,4 +1,4 @@
-import { ffmpegPath, ffprobePath, decodeArgs, h264Args } from './codecs';
+import { ffmpegPath, ffprobePath, decodeArgs, h264Args, checkExportCapabilities } from './codecs';
 import { ridesDir } from './paths';
 import { validateProject } from './validation';
 /**
@@ -190,6 +190,7 @@ async function runExport(paths: StudioPaths, job: Job, project: Project, origin:
     '-frames:v', String(totalFrames), '-f', 'mp4', partial);
   job.log.push(`ffmpeg ${args.map((a) => (/[\s;\[]/.test(a) ? JSON.stringify(a) : a)).join(' ')}`);
 
+  await checkExportCapabilities();
   let hud: HudRenderer | null = null;
   try {
     if (hasOverlays) {

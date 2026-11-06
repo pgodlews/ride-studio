@@ -217,8 +217,13 @@ async function packageWindows() {
 Extract the folder anywhere and run "Ride Studio.exe". The build is unsigned, so\r
 Windows SmartScreen may warn on first launch: choose More info, then Run anyway.\r
 \r
-FFmpeg must be on PATH (winget install Gyan.FFmpeg). ExifTool and Python 3 with\r
-Pillow are needed for camera/photo/Apple Health metadata; FIT and GPX need neither.\r
+FFmpeg/FFprobe must be on PATH (winget install Gyan.FFmpeg) or selected through\r
+STUDIO_FFMPEG/STUDIO_FFPROBE. Export needs the adelay all option; FFmpeg 6.1.1\r
+passed Windows testing. Use Check setup to verify the installed build.\r
+ExifTool and Python 3 with\r
+Pillow and tzdata (requirements-runtime.txt) are needed for camera/photo/Apple\r
+Health metadata; FIT and GPX need neither. Select Python in the File menu.\r
+STUDIO_EXIFTOOL can select an ExifTool executable outside PATH.\r
 `);
   const zip = join(release, `${name}.zip`);
   rmSync(zip, { force: true });

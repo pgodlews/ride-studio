@@ -12,7 +12,7 @@ const studio = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const temp = realpathSync(mkdtempSync(join(tmpdir(), 'photo studio test ')));
 const loader = await createServer({ root: studio, configFile: false, server: { middlewareMode: true }, appType: 'custom' });
 let http;
-const python = process.env.STUDIO_PYTHON ?? 'python3';
+const python = process.env.STUDIO_PYTHON ?? process.env.PYTHON ?? (process.platform === 'win32' ? 'python' : 'python3');
 const run = (command, args) => execFileSync(command, args, { encoding: 'utf8', stdio: 'pipe' });
 const hash = (path) => createHash('sha256').update(readFileSync(path)).digest('hex');
 try {
@@ -23,9 +23,9 @@ try {
   const paths = { studio: temp, mediaRoot: join(temp, 'unmounted'), cache: join(temp, '.cache'), exports: join(temp, 'exports') };
   const rides = join(temp, 'public/data/rides');
   mkdirSync(rides, { recursive: true });
-  symlinkSync(join(studio, 'scripts'), join(temp, 'scripts'));
-  symlinkSync(join(studio, 'src'), join(temp, 'src'));
-  symlinkSync(join(studio, 'node_modules'), join(temp, 'node_modules'));
+  symlinkSync(join(studio, 'scripts'), join(temp, 'scripts'), process.platform === 'win32' ? 'junction' : 'dir');
+  symlinkSync(join(studio, 'src'), join(temp, 'src'), process.platform === 'win32' ? 'junction' : 'dir');
+  symlinkSync(join(studio, 'node_modules'), join(temp, 'node_modules'), process.platform === 'win32' ? 'junction' : 'dir');
   const ride = { schema: 1, id: 'photos-test', startUtc: '2026-10-04T12:10:00Z', tzOffsetSec: 3600,
     t: [0, 1, 2, 3], channels: { speed: [0, 3, 6, 9], cadence: [0, 70, 80, 90] },
     meta: { hrZones: null, laps: [], climbs: [], summary: {}, sensors: [], warnings: [] } };

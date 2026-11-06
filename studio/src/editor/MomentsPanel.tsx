@@ -12,6 +12,7 @@ export interface MomentInfo extends Moment {
 
 interface Props {
   photos?: ReactNode;
+  autoMessage: string;
   ride: Ride;
   moments: MomentInfo[];
   sources: MomentInfo[];
@@ -26,7 +27,7 @@ const CATS: { id: MomentCategory | 'all'; label: string }[] = [
   { id: 'all', label: 'All' }, { id: 'effort', label: 'Effort' }, { id: 'terrain', label: 'Terrain' }, { id: 'story', label: 'Story' },
 ];
 
-export function MomentsPanel({ ride, moments, sources, selected, inTimeline, onPreview, onAdd, onAuto, photos }: Props) {
+export function MomentsPanel({ ride, moments, sources, selected, inTimeline, onPreview, onAdd, onAuto, photos, autoMessage }: Props) {
   const [cat, setCat] = useState<MomentCategory | 'all'>('all');
   const [count, setCount] = useState(10);
   const [seconds, setSeconds] = useState(6);
@@ -46,10 +47,12 @@ export function MomentsPanel({ ride, moments, sources, selected, inTimeline, onP
           <strong>Auto-edit</strong>
           <span>Best moment of each kind first, no overlaps, footage required, start/finish skipped.</span>
         </div>
+        <p>Building replaces the current timeline after confirmation.</p>
+        {autoMessage && <p role="status">{autoMessage}</p>}
         <div className="row">
           <label>Clips <select value={count} onChange={(e) => setCount(+e.target.value)}>{[5, 8, 10, 12, 15].map((n) => <option key={n}>{n}</option>)}</select></label>
           <label>Length <select value={seconds} onChange={(e) => setSeconds(+e.target.value)}>{[3, 4, 5, 6, 8, 10].map((n) => <option key={n} value={n}>{n} s</option>)}</select></label>
-          <button className="primary" disabled={!moments.length} onClick={() => onAuto(count, seconds)}>Build timeline</button>
+          <button className="primary" onClick={() => onAuto(count, seconds)}>Build timeline</button>
         </div>
       </div>
       <div className="group cats">

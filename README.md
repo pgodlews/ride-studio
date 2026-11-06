@@ -2,7 +2,7 @@
 
 Create cycling, running and hiking videos from local camera footage and FIT/GPX activities. The studio includes a telemetry widget gallery, timeline editing, photos, manual map synchronization and MP4 export. All activity and media processing stays on your computer; street maps request tiles through a local cache.
 
-This is an early developer alpha for macOS (Apple silicon) and Linux (x64, tested on Ubuntu 24.04 and 26.04). Windows (x64) support is experimental: it builds and passes its smoke test in CI but has not been tested on a real PC yet. The Electron application is runnable and can be packaged locally, but still requires the documented external FFmpeg and metadata tools. Installers are not signed/notarized. This branch is a curated source snapshot with no earlier Git history.
+This is an early developer alpha for macOS (Apple silicon) and Linux (x64, tested on Ubuntu 24.04 and 26.04). Windows (x64) support is experimental: partial Windows 11 synthetic testing passed, with clean-machine setup and real-media acceptance still pending. The Electron application is runnable and can be packaged locally, but still requires the documented external FFmpeg and metadata tools. Installers are not signed/notarized. This branch is a curated source snapshot with no earlier Git history.
 
 ![Four HUD design families on a real ride](docs/images/real-hud-families.jpg)
 

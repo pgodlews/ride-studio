@@ -11,7 +11,7 @@ import { createServer } from 'vite';
 const studio = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const temp = realpathSync(mkdtempSync(join(tmpdir(), 'phone studio test ')));
 const server = await createServer({ root: studio, configFile: false, server: { middlewareMode: true }, appType: 'custom' });
-const python = process.env.PYTHON ?? 'python3';
+const python = process.env.STUDIO_PYTHON ?? process.env.PYTHON ?? (process.platform === 'win32' ? 'python' : 'python3');
 const run = (command, args) => execFileSync(command, args, { encoding: 'utf8', stdio: 'pipe' });
 const hash = (path) => createHash('sha256').update(readFileSync(path)).digest('hex');
 try {
@@ -118,8 +118,8 @@ try {
   const mae = expected.reduce((sum, v, i) => sum + Math.abs(v - actual[i]), 0) / expected.length;
   assert.ok(mae < 8, `Portrait content differs (mean pixel error ${mae})`);
   if (process.env.PHONE_HUD) {
-    symlinkSync(join(studio, 'src'), join(temp, 'src'), 'dir');
-    symlinkSync(join(studio, 'node_modules'), join(temp, 'node_modules'), 'dir');
+    symlinkSync(join(studio, 'src'), join(temp, 'src'), process.platform === 'win32' ? 'junction' : 'dir');
+    symlinkSync(join(studio, 'node_modules'), join(temp, 'node_modules'), process.platform === 'win32' ? 'junction' : 'dir');
     const hud = await exportClip('phone-fit', file, 3.25, 1, 'Phone FIT HUD', [
       { uid: 'speed', widgetId: 'speed.glass', nx: .5, ny: .7, scale: 1, opacity: 1 },
       { uid: 'cadence', widgetId: 'cadence.glass', nx: .5, ny: .9, scale: 1, opacity: 1 },

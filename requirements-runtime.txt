@@ -1,2 +1,4 @@
 # Camera/photo helper runtime only. The proprietary FIT SDK is not an application dependency.
 Pillow==12.3.0
+# IANA timezone fallback for platforms without system zoneinfo (notably Windows).
+tzdata==2026.6

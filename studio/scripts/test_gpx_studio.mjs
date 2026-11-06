@@ -6,7 +6,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const studio = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const python = process.env.PYTHON ?? 'python3';
+const python = process.env.STUDIO_PYTHON ?? process.env.PYTHON ?? (process.platform === 'win32' ? 'python' : 'python3');
 const code = 'import sys,json; sys.path.insert(0,sys.argv[1]); from test_gpx_activity import fixture_ride; print(json.dumps(fixture_ride(), allow_nan=False))';
 const json = JSON.parse(execFileSync(python, ['-c', code, resolve(studio, 'scripts')], { encoding: 'utf8' }));
 const server = await createServer({ root: studio, configFile: false, server: { middlewareMode: true, hmr: false }, appType: 'custom' });

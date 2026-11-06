@@ -11,8 +11,8 @@ import { fileURLToPath } from 'node:url';
 import { createServer } from 'vite';
 
 const studio = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const venv = resolve(studio, '../.venv/bin/python');
-process.env.STUDIO_PYTHON ??= existsSync(venv) ? venv : 'python3';
+const venv = resolve(studio, process.platform === 'win32' ? '../.venv/Scripts/python.exe' : '../.venv/bin/python');
+process.env.STUDIO_PYTHON ??= existsSync(venv) ? venv : process.env.PYTHON ?? (process.platform === 'win32' ? 'python' : 'python3');
 const temp = realpathSync(mkdtempSync(join(tmpdir(), 'media studio test ')));
 const loader = await createServer({ root: studio, configFile: false, server: { middlewareMode: true }, appType: 'custom', logLevel: 'error' });
 let http;
@@ -26,7 +26,7 @@ try {
   const { mediaCoverage } = await loader.ssrLoadModule('/src/core/project.ts');
   const paths = { studio: temp, mediaRoot: join(temp, 'unmounted'), cache: join(temp, '.cache'), exports: join(temp, 'exports') };
   mkdirSync(join(temp, 'public/data/rides'), { recursive: true });
-  for (const d of ['scripts', 'src', 'node_modules']) symlinkSync(join(studio, d), join(temp, d));
+  for (const d of ['scripts', 'src', 'node_modules']) symlinkSync(join(studio, d), join(temp, d), process.platform === 'win32' ? 'junction' : 'dir');
   http = await createServer({ root: temp, configFile: false, plugins: [studioServer(temp)], optimizeDeps: { noDiscovery: true, include: [] }, server: { host: '127.0.0.1', port: 0 }, appType: 'custom', logLevel: 'error' });
   await http.listen();
   const origin = http.resolvedUrls.local[0].replace(/\/$/, '');

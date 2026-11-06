@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { readFileSync } from 'node:fs';
 
 const studio = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const python = process.env.PYTHON ?? 'python3';
+const python = process.env.STUDIO_PYTHON ?? process.env.PYTHON ?? (process.platform === 'win32' ? 'python' : 'python3');
 const code = 'import sys,json; sys.path.insert(0,sys.argv[1]); from test_activity_telemetry import messages; from prepare_ride import build_ride; print(json.dumps(build_ride(messages(), "fixture", "generated"), allow_nan=False))';
 const json = JSON.parse(execFileSync(python, ['-c', code, resolve(studio, 'scripts')], { encoding: 'utf8' }));
 const server = await createServer({ root: studio, configFile: false, server: { middlewareMode: true, hmr: false }, appType: 'custom' });

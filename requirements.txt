@@ -1,3 +1,5 @@
 Pillow==12.3.0
 numpy==2.3.5
 garmin-fit-sdk==21.217.0
+# IANA timezone fallback for platforms without system zoneinfo (notably Windows).
+tzdata==2026.6

@@ -163,7 +163,10 @@ export async function importMedia(paths: StudioPaths, req: IncomingMessage, ride
     }
     const projectionPath = join(dir, 'telemetry.json');
     const { stdout } = await run(studioPython(paths), [join(paths.studio, 'scripts/media_metadata.py'), sourcePath,
-      ...(cameraActivity ? ['--telemetry-out', projectionPath, '--id', rideId] : []), ...(timezone ? ['--timezone', timezone] : [])], { maxBuffer: 1 << 20 });
+      ...(cameraActivity ? ['--telemetry-out', projectionPath, '--id', rideId] : []), ...(timezone ? ['--timezone', timezone] : [])], { maxBuffer: 1 << 20 }).catch((error: Error & { code?: string }) => {
+      if (error.code === 'ENOENT') throw new Error('Python could not start. Choose a Python environment with Pillow and tzdata in File → Choose Python environment, or set STUDIO_PYTHON. Run Check setup in Ride Studio.');
+      throw error;
+    });
     const meta = JSON.parse(stdout);
     if (cameraActivity && !existsSync(projectionPath)) throw new Error('No recording UTC found. Open a FIT/GPX activity and import this clip there to pin it on the map.');
     const name = `MEDIA-${id.slice(0, 16)}.MP4`;

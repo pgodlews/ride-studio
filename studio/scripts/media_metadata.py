@@ -6,6 +6,8 @@ the clip is placed by its recorded clock or a user pin on the GPS track.
 """
 from __future__ import annotations
 
+from tool_runtime import run_tool
+
 import json
 import argparse
 import re
@@ -28,7 +30,7 @@ def iso(dt: datetime) -> str:
 
 def exif_tags(path: Path) -> dict:
     # No -ee: embedded per-frame documents are not needed and are slow on long clips.
-    result = subprocess.run(['exiftool', '-j', '-s', '-n',
+    result = run_tool('exiftool', ['-j', '-s', '-n',
                              '-CreationDate', '-DateTimeOriginal', '-Make', '-Model',
                              '-AndroidMake', '-AndroidModel', '-AndroidManufacturer', str(path)],
                             capture_output=True, text=True)
@@ -85,7 +87,7 @@ def main():
     path = args.video.resolve(strict=True)
     try:
         geometry = probe_video(path)
-    except (ValueError, KeyError, subprocess.CalledProcessError, json.JSONDecodeError) as error:
+    except (ValueError, OSError, KeyError, subprocess.CalledProcessError, json.JSONDecodeError) as error:
         sys.exit(f'Not a readable single-stream video: {error}')
     from camera_telemetry import camera_ride, inspect_camera, write_sample_evidence
     try:

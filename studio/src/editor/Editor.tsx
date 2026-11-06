@@ -58,6 +58,7 @@ export function Editor({ ride, nav }: { ride: Ride; nav: ReactNode }) {
   const [selClip, setSelClip] = useState<string | null>(null);
   const [selItem, setSelItem] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
+  const [autoMessage, setAutoMessage] = useState('');
 
   const fmt = FORMATS.find((f) => f.id === formatId) ?? FORMATS[0];
   const total = totalDuration({ clips });
@@ -208,7 +209,16 @@ export function Editor({ ride, nav }: { ride: Ride; nav: ReactNode }) {
       const mi = m as MomentInfo;
       return !mi.privacy && (mi.front >= 0.99 || mi.rear >= 0.99);
     });
+    if (!picks.length) {
+      const uncovered = moments.some((m) => !m.privacy);
+      setAutoMessage(!moments.length ? 'No moments detected. Add clips manually.' : uncovered
+        ? 'No eligible moments have complete footage coverage. Import or sync footage, or add clips manually. Your timeline is unchanged.'
+        : 'All detected moments are inside the hidden start/finish zone. Adjust privacy settings or add clips manually. Your timeline is unchanged.');
+      return;
+    }
+    if (clips.length && !window.confirm(`Replace the existing ${clips.length}-clip timeline with ${picks.length} auto-selected clips?`)) return;
     setClips(picks.map((m) => fromMoment(m as MomentInfo, seconds)));
+    setAutoMessage(`Built a timeline with ${picks.length} clips.`);
     setMode('program');
     src.setPlaying(false);
     program.setT(0);
@@ -275,7 +285,7 @@ export function Editor({ ride, nav }: { ride: Ride; nav: ReactNode }) {
 
       <div className="editor-main">
         <MomentsPanel ride={ride} moments={moments} sources={sources} selected={mode === 'source' ? source?.id ?? null : null}
-          inTimeline={new Set(clips.map((c) => c.momentId ?? ''))} onPreview={preview} onAdd={add} onAuto={auto}
+          inTimeline={new Set(clips.map((c) => c.momentId ?? ''))} onPreview={preview} onAdd={add} onAuto={auto} autoMessage={autoMessage}
           photos={<MediaPanel ride={ride} media={mediaLibrary.media} error={mediaLibrary.error}
             onImported={(m) => { mediaLibrary.imported(m); setFootageVersion((v) => v + 1); }} onPhotoImported={photoLibrary.imported}
             onPin={(m) => startSync({ kind: 'video', media: m })} onPreview={previewMedia} onAdd={addMedia}

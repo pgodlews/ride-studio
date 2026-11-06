@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url';
 import { createServer } from 'vite';
 
 const studio = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const python = process.env.STUDIO_PYTHON ?? process.env.PYTHON ?? 'python3';
+const python = process.env.STUDIO_PYTHON ?? process.env.PYTHON ?? (process.platform === 'win32' ? 'python' : 'python3');
 const temp = mkdtempSync(join(tmpdir(), 'gpx-port-'));
 const server = await createServer({ root: studio, configFile: false, server: { middlewareMode: true }, appType: 'custom' });
 

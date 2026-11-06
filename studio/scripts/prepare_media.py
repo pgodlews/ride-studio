@@ -1,6 +1,8 @@
 """Automatically import DJI, GoPro GPMF or generic EXIF video as a studio ride."""
 from __future__ import annotations
 
+from tool_runtime import run_tool
+
 import argparse
 import json
 import re
@@ -37,7 +39,7 @@ def main():
             if not args.inspect:
                 raise ValueError('Import still photos through Editor → Videos & photos; --inspect reads EXIF here')
             from photo_metadata import metadata
-            raw = subprocess.run(['exiftool', '-j', '-n', '-GPS*', '-DateTimeOriginal', '-SubSecDateTimeOriginal', '-OffsetTimeOriginal', str(source)], check=True, capture_output=True, text=True)
+            raw = run_tool('exiftool', ['-j', '-n', '-GPS*', '-DateTimeOriginal', '-SubSecDateTimeOriginal', '-OffsetTimeOriginal', str(source)], check=True, capture_output=True, text=True)
             print(json.dumps({'detection': {'kind': 'exif-photo'}, **metadata(json.loads(raw.stdout)[0])}, allow_nan=False))
             return
         rows, info, meta = inspect_camera(source, start_utc=args.start_utc, sidecar=args.sidecar, timezone_name=args.timezone,

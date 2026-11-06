@@ -138,6 +138,14 @@ The direct studio dependencies below are pinned exactly (updated 30 October 2026
 
 Garmin's FIT SDK (`garmin-fit-sdk`) is used only by the Python research tools and tests, installed by each developer from Garmin's publication. Its license does not permit redistribution, so it is not included here.
 
+## Python timezone data
+
+`tzdata` 2026.6, maintained by the Python Software Foundation and CPython contributors,
+provides the IANA timezone database fallback for the runtime and Python reference tools.
+The Python package is Apache-2.0 licensed; the IANA database is public domain.
+The installed distribution retains its LICENSE and licenses/LICENSE_APACHE materials.
+See https://github.com/python/tzdata.
+
 ## Desktop build tools and Electron runtime
 
 - `electron` 44.10.0: Electron Community, MIT. Packaged applications retain Electron's LICENSE and Chromium third-party license materials supplied with the runtime.

@@ -7,11 +7,12 @@ approximation, not a subsecond GPS-to-frame calibration.
 """
 from __future__ import annotations
 
+from tool_runtime import run_tool
+
 import hashlib
 import json
 import math
 import struct
-import subprocess
 from collections import Counter
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -167,12 +168,12 @@ def read_gopro(path: Path, probe=None, max_dop=5.0, max_speed_mps=100 / 3.6):
     if not all(math.isfinite(v) and v > 0 for v in (max_dop, max_speed_mps)):
         raise ValueError('GoPro quality limits must be finite and positive')
     if probe is None:
-        probe = json.loads(subprocess.run(['ffprobe', '-v', 'error', '-show_streams', '-show_format', '-of', 'json', str(path)], check=True, capture_output=True, text=True).stdout)
+        probe = json.loads(run_tool('ffprobe', ['-v', 'error', '-show_streams', '-show_format', '-of', 'json', str(path)], check=True, capture_output=True, text=True).stdout)
     tracks = [s for s in probe['streams'] if s.get('codec_tag_string') == 'gpmd']
     if len(tracks) != 1:
         raise ValueError('GoPro import requires exactly one gpmd telemetry track')
     track = tracks[0]
-    packets = json.loads(subprocess.run(['ffprobe', '-v', 'error', '-select_streams', str(track['index']), '-show_packets',
+    packets = json.loads(run_tool('ffprobe', ['-v', 'error', '-select_streams', str(track['index']), '-show_packets',
                                         '-show_entries', 'packet=pts_time,duration_time,pos,size', '-of', 'json', str(path)],
                                        check=True, capture_output=True, text=True).stdout)['packets']
     size = path.stat().st_size

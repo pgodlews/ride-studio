@@ -1,9 +1,10 @@
 """Content-based DJI/GPMF/EXIF detection and a shared camera ride projection."""
 from __future__ import annotations
 
+from tool_runtime import run_tool
+
 import json
 import math
-import subprocess
 from datetime import timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -19,7 +20,7 @@ PHOTO_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.webp', '.tif', '.tiff', '.heic', 
 
 
 def container_probe(path):
-    return json.loads(subprocess.run(['ffprobe', '-v', 'error', '-show_streams', '-show_format', '-of', 'json', str(path)],
+    return json.loads(run_tool('ffprobe', ['-v', 'error', '-show_streams', '-show_format', '-of', 'json', str(path)],
                                     check=True, capture_output=True, text=True).stdout)
 
 
