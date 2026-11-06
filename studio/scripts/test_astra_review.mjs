@@ -11,7 +11,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { createServer } from 'vite';
 
 const studio = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const temp = realpathSync(mkdtempSync(join(tmpdir(), 'astra-regression-')));
+const temp = realpathSync.native(mkdtempSync(join(tmpdir(), 'astra-regression-')));
 const attribution = '© Synthetic tile provider & contributors';
 const savedTileEnv = { url: process.env.STUDIO_TILE_URL, attribution: process.env.STUDIO_TILE_ATTRIBUTION };
 process.env.STUDIO_TILE_URL = 'http://127.0.0.1:9/{z}/{x}/{y}.png';

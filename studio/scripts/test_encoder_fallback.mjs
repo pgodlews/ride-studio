@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url';
 import { createServer } from 'vite';
 
 const studio = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const temp = realpathSync(mkdtempSync(join(tmpdir(), 'encoder-fallback-')));
+const temp = realpathSync.native(mkdtempSync(join(tmpdir(), 'encoder-fallback-')));
 const realFfmpeg = process.env.STUDIO_FFMPEG ?? 'ffmpeg';
 const calls = join(temp, 'ffmpeg-calls.log');
 const failX264 = join(temp, 'fail-libx264');

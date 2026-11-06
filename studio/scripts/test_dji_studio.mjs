@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { createServer } from 'vite';
 
 const studio = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const temp = realpathSync(mkdtempSync(join(tmpdir(), 'dji studio test ')));
+const temp = realpathSync.native(mkdtempSync(join(tmpdir(), 'dji studio test ')));
 const server = await createServer({ root: studio, configFile: false, server: { middlewareMode: true }, appType: 'custom' });
 try {
   const video = join(temp, 'original clip.mp4');

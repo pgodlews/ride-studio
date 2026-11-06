@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { createServer } from 'vite';
 
 const studio = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const temp = realpathSync(mkdtempSync(join(tmpdir(), 'garmin-preview-')));
+const temp = realpathSync.native(mkdtempSync(join(tmpdir(), 'garmin-preview-')));
 const probe = (file) => {
   const json = JSON.parse(execFileSync('ffprobe', ['-v', 'error', '-show_streams', '-show_format', '-of', 'json', file], { encoding: 'utf8' }));
   const video = json.streams.find((stream) => stream.codec_type === 'video');

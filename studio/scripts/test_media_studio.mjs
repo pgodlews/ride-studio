@@ -12,8 +12,8 @@ import { createServer } from 'vite';
 
 const studio = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const venv = resolve(studio, process.platform === 'win32' ? '../.venv/Scripts/python.exe' : '../.venv/bin/python');
-process.env.STUDIO_PYTHON ??= existsSync(venv) ? venv : process.env.PYTHON ?? (process.platform === 'win32' ? 'python' : 'python3');
-const temp = realpathSync(mkdtempSync(join(tmpdir(), 'media studio test ')));
+process.env.STUDIO_PYTHON ??= process.env.PYTHON ?? (existsSync(venv) ? venv : process.platform === 'win32' ? 'python' : 'python3');
+const temp = realpathSync.native(mkdtempSync(join(tmpdir(), 'media studio test ')));
 const loader = await createServer({ root: studio, configFile: false, server: { middlewareMode: true }, appType: 'custom', logLevel: 'error' });
 let http;
 const run = (command, args) => execFileSync(command, args, { encoding: 'utf8', stdio: 'pipe' });

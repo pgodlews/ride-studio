@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { createServer } from 'vite';
 
 const studio = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const temp = realpathSync(mkdtempSync(join(tmpdir(), 'photo studio test ')));
+const temp = realpathSync.native(mkdtempSync(join(tmpdir(), 'photo studio test ')));
 const loader = await createServer({ root: studio, configFile: false, server: { middlewareMode: true }, appType: 'custom' });
 let http;
 const python = process.env.STUDIO_PYTHON ?? process.env.PYTHON ?? (process.platform === 'win32' ? 'python' : 'python3');

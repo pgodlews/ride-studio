@@ -10,7 +10,7 @@ import { createServer } from 'vite';
 
 const studio = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const python = process.env.STUDIO_PYTHON ?? process.env.PYTHON ?? (process.platform === 'win32' ? 'python' : 'python3');
-const temp = realpathSync(mkdtempSync(join(tmpdir(), 'photo port test ')));
+const temp = realpathSync.native(mkdtempSync(join(tmpdir(), 'photo port test ')));
 const run = (command, args) => execFileSync(command, args, { encoding: 'utf8', stdio: 'pipe', maxBuffer: 1 << 24 });
 const file = (name) => join(temp, name);
 // exiftool exits nonzero when one of the files is unreadable, which is a case under test here.

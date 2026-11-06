@@ -9,9 +9,10 @@ import { fileURLToPath } from 'node:url';
 import { createServer } from 'vite';
 
 const studio = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const python = process.env.STUDIO_PYTHON ?? (existsSync(resolve(studio, process.platform === 'win32' ? '../.venv/Scripts/python.exe' : '../.venv/bin/python')) ? resolve(studio, process.platform === 'win32' ? '../.venv/Scripts/python.exe' : '../.venv/bin/python') : process.env.PYTHON ?? (process.platform === 'win32' ? 'python' : 'python3'));
+const venv = resolve(studio, process.platform === 'win32' ? '../.venv/Scripts/python.exe' : '../.venv/bin/python');
+const python = process.env.STUDIO_PYTHON ?? process.env.PYTHON ?? (existsSync(venv) ? venv : process.platform === 'win32' ? 'python' : 'python3');
 process.env.STUDIO_PYTHON = python;
-const temp = realpathSync(mkdtempSync(join(tmpdir(), 'camera-studio-')));
+const temp = realpathSync.native(mkdtempSync(join(tmpdir(), 'camera-studio-')));
 const loader = await createServer({ root: studio, configFile: false, server: { middlewareMode: true }, appType: 'custom', logLevel: 'error' });
 const run = (cmd, args) => execFileSync(cmd, args, { encoding: 'utf8', stdio: 'pipe' });
 const hash = (p) => createHash('sha256').update(readFileSync(p)).digest('hex');
