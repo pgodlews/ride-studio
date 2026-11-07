@@ -6,9 +6,10 @@ ride and clips the gallery should load. All outputs are local and ignored by Git
 """
 from __future__ import annotations
 
+from tool_runtime import run_tool
+
 import argparse
 import json
-import subprocess
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -43,13 +44,12 @@ def main() -> None:
         name = f'{args.ride_id}-seg{n}.mp4'
         out = media_dir / name
         if not out.exists():
-            subprocess.run([
-                'ffmpeg', '-v', 'error', '-y', '-ss', f'{seek:.3f}', '-i', str(src), '-t', f'{duration:.3f}',
+            run_tool('ffmpeg', [ '-v', 'error', '-y', '-ss', f'{seek:.3f}', '-i', str(src), '-t', f'{duration:.3f}',
                 '-vf', 'scale=1280:720:flags=lanczos,fps=30', '-an', '-c:v', 'libx264', '-preset', 'medium',
                 '-crf', '31', '-g', '30', '-tune', 'fastdecode', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', str(out)], check=True)
         poster = out.with_suffix('.jpg')
         if not poster.exists():
-            subprocess.run(['ffmpeg', '-v', 'error', '-y', '-ss', f'{lead:.3f}', '-i', str(out),
+            run_tool('ffmpeg', ['-v', 'error', '-y', '-ss', f'{lead:.3f}', '-i', str(out),
                             '-frames:v', '1', '-q:v', '3', str(poster)], check=True)
         clips.append({
             'label': seg.get('role', f'segment {n}').replace('-', ' '),

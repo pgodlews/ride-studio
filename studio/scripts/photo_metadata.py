@@ -2,6 +2,7 @@
 
 The input is never modified. A geotag is a single location, not ride telemetry.
 """
+from tool_runtime import run_tool
 import argparse
 import json
 import math
@@ -64,7 +65,7 @@ def metadata(tags):
 
 
 def prepare(source, output):
-    result = subprocess.run(['exiftool', '-j', '-n', '-GPSLatitude', '-GPSLongitude',
+    result = run_tool('exiftool', ['-j', '-n', '-GPSLatitude', '-GPSLongitude',
                              '-GPSAltitude', '-GPSDateTime', '-DateTimeOriginal',
                              '-SubSecDateTimeOriginal', '-OffsetTimeOriginal', str(source)],
                             check=True, capture_output=True, text=True)

@@ -1,8 +1,8 @@
 """Shared read-only video probing and local footage registration."""
+from tool_runtime import run_tool
 import hashlib
 import json
 import math
-import subprocess
 
 from datetime import datetime
 
@@ -11,7 +11,7 @@ def iso(dt: datetime):
 
 
 def probe_video(path):
-    result = subprocess.run(['ffprobe', '-v', 'error', '-show_streams', '-show_format',
+    result = run_tool('ffprobe', ['-v', 'error', '-show_streams', '-show_format',
                              '-of', 'json', str(path)], check=True, capture_output=True, text=True)
     data = json.loads(result.stdout)
     video = [s for s in data['streams'] if s['codec_type'] == 'video']
@@ -74,7 +74,7 @@ def browser_preview(video, output):
             pass
     pending = output.with_suffix('.pending.mp4')
     try:
-        subprocess.run(['ffmpeg', '-v', 'error', '-i', str(video), '-map', '0:v:0', '-map', '0:a:0?',
+        run_tool('ffmpeg', ['-v', 'error', '-i', str(video), '-map', '0:v:0', '-map', '0:a:0?',
                         '-vf', "scale='min(1280,iw)':-2,fps=30", '-c:v', 'libx264', '-preset', 'veryfast',
                         '-crf', '24', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '128k',
                         '-movflags', '+faststart', str(pending)], check=True, capture_output=True)

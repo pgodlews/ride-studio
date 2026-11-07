@@ -5,7 +5,7 @@ import json
 import math
 import re
 import statistics
-import subprocess
+from tool_runtime import run_tool
 
 
 def finite(value):
@@ -84,8 +84,7 @@ def decode_metadata(data, duration):
 
 
 def read_metadata(path, duration):
-    result = subprocess.run([
-        'exiftool', '-ee3', '-G3', '-a', '-s', '-n', '-j', '-GPS*',
+    result = run_tool('exiftool', [ '-ee3', '-G3', '-a', '-s', '-n', '-j', '-GPS*',
         '-SampleTime', '-SampleDuration', '-LocationAccuracyHorizontal',
         '-CreationDate', '-Make', '-Model', str(path),
     ], check=True, capture_output=True, text=True)

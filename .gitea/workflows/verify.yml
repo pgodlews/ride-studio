@@ -50,7 +50,7 @@ jobs:
           # Root-owned build/reference loaders may create Vite cache entries after installation.
           # Chromium runs as the unprivileged node user; keep the shared workspace/cache owned by it.
           chown -R node:node .
-          for suite in desktop_server activity_studio gpx_studio dji_studio camera_studio phone_studio photo_studio media_studio usb_mtp foot_widgets astra_review garmin_preview encoder_fallback; do
+          for suite in desktop_server runtime_tools editor_ui activity_studio gpx_studio dji_studio camera_studio phone_studio photo_studio media_studio usb_mtp foot_widgets astra_review garmin_preview encoder_fallback; do
             runuser -u node -- env STUDIO_PYTHON="$PWD/.venv/bin/python" PYTHON="$PWD/.venv/bin/python" STUDIO_CHROME=/tmp/ride-ci-chromium STUDIO_HUD_WORKERS=2 node "studio/scripts/test_${suite}.mjs"
           done
       - name: Electron desktop smoke and Linux packages

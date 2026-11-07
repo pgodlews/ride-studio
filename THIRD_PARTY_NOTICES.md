@@ -138,6 +138,14 @@ The direct studio dependencies below are pinned exactly (updated 30 October 2026
 
 Garmin's FIT SDK (`garmin-fit-sdk`) is used only by the Python research tools and tests, installed by each developer from Garmin's publication. Its license does not permit redistribution, so it is not included here.
 
+## Python timezone data
+
+`tzdata` 2026.6, maintained by the Python Software Foundation and CPython contributors,
+provides the IANA timezone database fallback for the runtime and Python reference tools.
+The Python package is Apache-2.0 licensed; the IANA database is public domain.
+The installed distribution retains its LICENSE and licenses/LICENSE_APACHE materials.
+See https://github.com/python/tzdata.
+
 ## Desktop build tools and Electron runtime
 
 - `electron` 44.10.0: Electron Community, MIT. Packaged applications retain Electron's LICENSE and Chromium third-party license materials supplied with the runtime.
@@ -146,7 +154,7 @@ Garmin's FIT SDK (`garmin-fit-sdk`) is used only by the Python research tools an
 
 The desktop alpha invokes an installed FFmpeg/FFprobe distribution and does not redistribute it. macOS desktop export selects Apple's VideoToolbox H.264 encoder; the application package does not include libx264. Linux desktop export uses the distribution's FFmpeg, which the `.deb` declares as a dependency rather than bundling, selecting its NVENC encoder when the GPU can encode and its libx264 otherwise. Reproducible LGPL-only FFmpeg build recipes remain available under `packaging/ffmpeg/`; bundling those executables requires their matching source/build/license materials and a concrete release source archive location. Existing fonts are unchanged.
 
-macOS developer packaging uses Apple’s installed `ditto`, `PlistBuddy` and `codesign` tools and the pinned Electron runtime. Linux developer packaging uses the system `tar` and `dpkg-deb`, with FFmpeg rasterizing the project's own application icon (`studio/desktop/icon.svg`, MIT with the project). No third-party packaging dependency is required. Packaged applications include `ELECTRON-LICENSE.txt` and `LICENSES.chromium.html` from the exact Electron runtime distribution; the `.deb` also installs the project license and these notices under `/usr/share/doc/ride-studio`.
+macOS developer packaging uses Apple’s installed `ditto`, `PlistBuddy` and `codesign` tools and the pinned Electron runtime. Linux developer packaging uses the system `tar` and `dpkg-deb`, with the project's own application icon (`studio/desktop/icon.svg` and its 512 px PNG rendering, MIT with the project). Windows developer packaging uses the `tar` built into Windows 10 and later. No third-party packaging dependency is required. Packaged applications include `ELECTRON-LICENSE.txt` and `LICENSES.chromium.html` from the exact Electron runtime distribution; the `.deb` also installs the project license and these notices under `/usr/share/doc/ride-studio`.
 
 - `esbuild` 0.28.2: Evan Wallace and contributors, MIT; Vite’s build-time JavaScript/JSX transform.
 - `rollup` 4.64.6: Rollup contributors, MIT; Vite’s build-time bundler.

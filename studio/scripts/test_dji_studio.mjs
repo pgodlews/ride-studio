@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { createServer } from 'vite';
 
 const studio = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const temp = realpathSync(mkdtempSync(join(tmpdir(), 'dji studio test ')));
+const temp = realpathSync.native(mkdtempSync(join(tmpdir(), 'dji studio test ')));
 const server = await createServer({ root: studio, configFile: false, server: { middlewareMode: true }, appType: 'custom' });
 try {
   const video = join(temp, 'original clip.mp4');
@@ -24,9 +24,9 @@ try {
   const args = ['prepare_dji.py', sidecar, '--start-utc', '2026-10-04T12:00:00.125Z',
     '--clock-correction-sec', '2', '--timezone', 'Europe/London', '--id', 'dji-test', '--out-dir', rides,
     '--video', video, '--preview', video, '--register', '--camera', 'rear'];
-  execFileSync('python3', ['-c', python, join(studio, 'scripts'), temp, ...args]);
+  execFileSync(process.env.STUDIO_PYTHON ?? process.env.PYTHON ?? (process.platform === 'win32' ? 'python' : 'python3'), ['-c', python, join(studio, 'scripts'), temp, ...args]);
   const before = readFileSync(video);
-  assert.throws(() => execFileSync('python3', ['-c', python, join(studio, 'scripts'), temp, ...args], { stdio: 'pipe' }), /Command failed/);
+  assert.throws(() => execFileSync(process.env.STUDIO_PYTHON ?? process.env.PYTHON ?? (process.platform === 'win32' ? 'python' : 'python3'), ['-c', python, join(studio, 'scripts'), temp, ...args], { stdio: 'pipe' }), /Command failed/);
   const { footageIndex, mediaPath } = await server.ssrLoadModule('/server/plugin.ts');
   const { fileStartMs, sourceInfo } = await server.ssrLoadModule('/src/core/project.ts');
   const { Ride } = await server.ssrLoadModule('/src/core/ride.ts');

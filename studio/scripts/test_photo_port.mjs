@@ -4,13 +4,13 @@ import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join, resolve } from 'node:path';
+import { dirname, join, normalize, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createServer } from 'vite';
 
 const studio = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const python = process.env.STUDIO_PYTHON ?? process.env.PYTHON ?? 'python3';
-const temp = realpathSync(mkdtempSync(join(tmpdir(), 'photo port test ')));
+const python = process.env.STUDIO_PYTHON ?? process.env.PYTHON ?? (process.platform === 'win32' ? 'python' : 'python3');
+const temp = realpathSync.native(mkdtempSync(join(tmpdir(), 'photo port test ')));
 const run = (command, args) => execFileSync(command, args, { encoding: 'utf8', stdio: 'pipe', maxBuffer: 1 << 24 });
 const file = (name) => join(temp, name);
 // exiftool exits nonzero when one of the files is unreadable, which is a case under test here.
@@ -542,7 +542,7 @@ const orientationSource = (name) => {
 };
 const sources = new Map(names.map((name) => [name, orientationSource(name)]));
 const orientationOf = new Map(exiftoolJson(['-j', '-n', '-Orientation'], [...sources.values()])
-  .map((entry) => [entry.SourceFile, entry.Orientation ?? null]));
+  .map((entry) => [normalize(entry.SourceFile), entry.Orientation ?? null]));
 
 // ---------------------------------------------------------------- comparison
 
@@ -659,7 +659,7 @@ try {
       const { gps, captureTime, capturedUtc, clockSource, warnings, width, height } = actual;
       assert.deepEqual({ gps, captureTime, capturedUtc, clockSource, warnings, width, height },
         entry.prepared, `${entry.name}: readPhotoMetadata() vs prepare()`);
-      assert.equal(actual.orientation, orientationOf.get(sources.get(entry.name)), `${entry.name}: orientation`);
+      assert.equal(actual.orientation, orientationOf.get(normalize(sources.get(entry.name))), `${entry.name}: orientation`);
       for (const [key, value] of Object.entries(SPOT_CHECKS[entry.name] ?? {})) {
         assert.deepEqual(actual[key], value, `${entry.name}: ${key}`);
       }

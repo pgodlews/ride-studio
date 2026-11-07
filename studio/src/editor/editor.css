@@ -15,6 +15,7 @@ button.primary.small { padding: 4px 10px; font-size: 12px; }
 
 .moments-panel { display: flex; flex-direction: column; min-height: 0; border-right: 1px solid var(--line); }
 .moments-panel .auto { padding: 12px 14px; border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px; background: linear-gradient(180deg, rgba(91,235,248,0.06), transparent); }
+.moments-panel .auto p { margin: 0; color: var(--muted); font-size: 11.5px; }
 .moments-panel .auto strong { display: block; font-size: 13.5px; }
 .moments-panel .auto span { color: var(--muted); font-size: 11.5px; }
 .moments-panel .auto .row { display: flex; align-items: center; gap: 10px; }

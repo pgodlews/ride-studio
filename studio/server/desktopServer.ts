@@ -23,6 +23,9 @@ export async function startDesktopServer(o: { studio: string; dataRoot: string; 
     }
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'");
+    if (req.url?.split('?')[0] === '/api/capabilities' && req.method === 'GET') {
+      res.writeHead(200, { 'Content-Type': 'application/json' }).end(JSON.stringify({ desktop: true, webUsb: false })); return;
+    }
     void middleware(req, res, () => {
       if (req.method !== 'GET' && req.method !== 'HEAD') { res.writeHead(405).end(); return; }
       let path: string;

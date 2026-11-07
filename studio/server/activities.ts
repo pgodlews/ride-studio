@@ -26,10 +26,13 @@ export interface RideSummary {
   gps: boolean;
 }
 
-/** Python for the studio helpers (Garmin FIT SDK, Pillow): STUDIO_PYTHON, else the repository .venv, else python3. */
+/** A virtual environment's interpreter: Scripts\python.exe on Windows, bin/python elsewhere. */
+export const venvPython = (dir: string) => process.platform === 'win32' ? join(dir, 'Scripts', 'python.exe') : join(dir, 'bin', 'python');
+
+/** Python for the studio helpers (Garmin FIT SDK, Pillow): STUDIO_PYTHON, else the repository .venv, else python3 (python on Windows). */
 export function studioPython(paths: StudioPaths): string {
-  const venv = join(paths.studio, '..', '.venv', 'bin', 'python');
-  return process.env.STUDIO_PYTHON ?? (existsSync(venv) ? venv : 'python3');
+  const venv = venvPython(join(paths.studio, '..', '.venv'));
+  return process.env.STUDIO_PYTHON ?? (existsSync(venv) ? venv : process.platform === 'win32' ? 'python' : 'python3');
 }
 
 const manifestPath = (paths: StudioPaths) => join(paths.cache, 'activity-imports.json');

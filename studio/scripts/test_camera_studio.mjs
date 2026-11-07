@@ -9,9 +9,10 @@ import { fileURLToPath } from 'node:url';
 import { createServer } from 'vite';
 
 const studio = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const python = process.env.STUDIO_PYTHON ?? (existsSync(resolve(studio, '../.venv/bin/python')) ? resolve(studio, '../.venv/bin/python') : 'python3');
+const venv = resolve(studio, process.platform === 'win32' ? '../.venv/Scripts/python.exe' : '../.venv/bin/python');
+const python = process.env.STUDIO_PYTHON ?? process.env.PYTHON ?? (existsSync(venv) ? venv : process.platform === 'win32' ? 'python' : 'python3');
 process.env.STUDIO_PYTHON = python;
-const temp = realpathSync(mkdtempSync(join(tmpdir(), 'camera-studio-')));
+const temp = realpathSync.native(mkdtempSync(join(tmpdir(), 'camera-studio-')));
 const loader = await createServer({ root: studio, configFile: false, server: { middlewareMode: true }, appType: 'custom', logLevel: 'error' });
 const run = (cmd, args) => execFileSync(cmd, args, { encoding: 'utf8', stdio: 'pipe' });
 const hash = (p) => createHash('sha256').update(readFileSync(p)).digest('hex');
@@ -22,7 +23,7 @@ try {
   const { Ride } = await loader.ssrLoadModule('/src/core/ride.ts');
   const paths = { studio: temp, cache: join(temp, '.cache'), mediaRoot: join(temp, 'unmounted'), exports: join(temp, 'exports') };
   mkdirSync(join(temp, 'public/data/rides'), { recursive: true });
-  for (const d of ['scripts', 'src', 'node_modules']) symlinkSync(join(studio, d), join(temp, d));
+  for (const d of ['scripts', 'src', 'node_modules']) symlinkSync(join(studio, d), join(temp, d), process.platform === 'win32' ? 'junction' : 'dir');
   http = await createServer({ root: temp, configFile: false, plugins: [studioServer(temp)], optimizeDeps: { noDiscovery: true, include: [] }, server: { host: '127.0.0.1', port: 0 }, appType: 'custom', logLevel: 'error' });
   await http.listen();
   const origin = http.resolvedUrls.local[0].replace(/\/$/, '');

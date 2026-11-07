@@ -245,6 +245,7 @@ export function studioMiddleware(paths: StudioPaths) {
   return async (req: IncomingMessage, res: ServerResponse, next: () => void) => {
         const url = new URL(req.url ?? '/', 'http://local');
         try {
+          if (url.pathname === '/api/capabilities' && req.method === 'GET') return json(res, 200, { desktop: false, webUsb: true });
           if (url.pathname === '/api/photos') {
             const rideId = url.searchParams.get('rideId') ?? '';
             if (req.method === 'GET') return json(res, 200, { photos: photoIndex(paths, rideId) });

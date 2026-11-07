@@ -50,7 +50,7 @@ jobs:
           # Root-owned build/reference loaders may create Vite cache entries after installation.
           # Chromium runs as the unprivileged node user; keep the shared workspace/cache owned by it.
           chown -R node:node .
-          for suite in desktop_server activity_studio gpx_studio dji_studio camera_studio phone_studio photo_studio media_studio usb_mtp foot_widgets astra_review garmin_preview encoder_fallback; do
+          for suite in desktop_server runtime_tools editor_ui activity_studio gpx_studio dji_studio camera_studio phone_studio photo_studio media_studio usb_mtp foot_widgets astra_review garmin_preview encoder_fallback; do
             runuser -u node -- env STUDIO_PYTHON="$PWD/.venv/bin/python" PYTHON="$PWD/.venv/bin/python" STUDIO_CHROME=/tmp/ride-ci-chromium STUDIO_HUD_WORKERS=2 node "studio/scripts/test_${suite}.mjs"
           done
       - name: Electron desktop smoke and Linux packages
@@ -72,3 +72,102 @@ jobs:
           runuser -u node -- git diff --check
           runuser -u node -- npm --prefix studio audit --audit-level=high
           runuser -u node -- node studio/scripts/check_licenses.mjs
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 40
+    defaults:
+      run:
+        shell: pwsh
+    env:
+      STUDIO_HUD_WORKERS: '2'
+      STUDIO_PYTHON: ${{ github.workspace }}\.venv\Scripts\python.exe
+      PYTHON: ${{ github.workspace }}\.venv\Scripts\python.exe
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Set up Node.js 24
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+      - name: Verify early native failures stop PowerShell checks
+        run: |
+          # A disposable child step must stop at the first native failure, before node succeeds.
+          $PSNativeCommandUseErrorActionPreference = $false
+          $probe = Join-Path $env:RUNNER_TEMP 'ride-failure-probe.ps1'
+          @'
+          node -e 'process.exit(7)'
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node -e 'process.exit(0)'
+          '@ | Set-Content $probe
+          & pwsh -NoProfile -File $probe
+          if ($LASTEXITCODE -ne 7) { throw 'Early native failure was masked' }
+          # The expected child failure must not become the wrapper's final exit status.
+          exit 0
+      - name: Install media tools and locked dependencies
+        run: |
+          choco install ffmpeg exiftool -y --no-progress
+          if ($LASTEXITCODE -ne 0) { throw 'Media tool installation failed' }
+          python -m venv .venv
+          if ($LASTEXITCODE -ne 0) { throw 'Python environment creation failed' }
+          & $env:STUDIO_PYTHON -m pip install -r requirements.txt
+          if ($LASTEXITCODE -ne 0) { throw 'Reference dependency installation failed' }
+          npm --prefix studio ci
+          if ($LASTEXITCODE -ne 0) { throw 'Locked npm installation failed' }
+          if (-not (Test-Path studio/node_modules/electron/path.txt)) {
+            node studio/node_modules/electron/install.js
+            if ($LASTEXITCODE -ne 0) { throw 'Electron installation failed' }
+          }
+      - name: Type check and build production applications
+        run: |
+          npm --prefix studio run typecheck
+          if ($LASTEXITCODE -ne 0) { throw 'Type check failed' }
+          npm --prefix studio run build
+          if ($LASTEXITCODE -ne 0) { throw 'Client build failed' }
+          npm --prefix studio run desktop:build
+          if ($LASTEXITCODE -ne 0) { throw 'Desktop build failed' }
+      - name: Python references and importer parity
+        run: |
+          & $env:STUDIO_PYTHON -m unittest discover -s studio/scripts -p 'test_*.py'
+          if ($LASTEXITCODE -ne 0) { throw 'Python references failed' }
+          foreach ($suite in 'fit', 'gpx', 'apple_health', 'photo', 'pyround') {
+            node "studio/scripts/test_${suite}_port.mjs"
+            if ($LASTEXITCODE -ne 0) { throw "Importer parity failed: $suite" }
+          }
+      - name: Windows backend, editing and export regressions
+        run: |
+          foreach ($suite in 'desktop_server', 'runtime_tools', 'editor_ui', 'garmin_preview', 'encoder_fallback', 'activity_studio', 'gpx_studio', 'dji_studio', 'camera_studio', 'phone_studio', 'photo_studio', 'media_studio', 'usb_mtp') {
+            node "studio/scripts/test_${suite}.mjs"
+            if ($LASTEXITCODE -ne 0) { throw "Regression failed: $suite" }
+          }
+      - name: Electron native HUD smoke
+        run: |
+          & studio/node_modules/.bin/electron.cmd studio/desktop-dist --smoke "--profile=$env:RUNNER_TEMP/ride-dev-smoke"
+          if ($LASTEXITCODE -ne 0) { throw 'Development smoke failed' }
+      - name: Package and smoke-test the extracted Windows zip
+        run: |
+          npm --prefix studio run desktop:package
+          if ($LASTEXITCODE -ne 0) { throw 'Windows packaging failed' }
+          $zip = @(Get-ChildItem studio/release/*.zip)
+          if ($zip.Count -ne 1) { throw 'Expected one Windows zip' }
+          $destination = Join-Path $env:RUNNER_TEMP 'Ride Studio extracted ü'
+          Expand-Archive -LiteralPath $zip[0].FullName -DestinationPath $destination
+          $executable = @(Get-ChildItem -LiteralPath $destination -Recurse -Filter 'Ride Studio.exe')
+          if ($executable.Count -ne 1) { throw 'Expected one packaged executable' }
+          $process = Start-Process -FilePath $executable[0].FullName -ArgumentList @('--smoke', "`"--profile=$env:RUNNER_TEMP/ride packaged ü`"") -Wait -PassThru
+          if ($process.ExitCode -ne 0) { throw 'Extracted zip smoke failed' }
+      - name: Whitespace, dependency audit and licenses
+        run: |
+          git diff --check
+          if ($LASTEXITCODE -ne 0) { throw 'Whitespace check failed' }
+          npm --prefix studio audit --audit-level=high
+          if ($LASTEXITCODE -ne 0) { throw 'Dependency audit failed' }
+          node studio/scripts/check_licenses.mjs
+          if ($LASTEXITCODE -ne 0) { throw 'License policy failed' }
+      - name: Upload the developer-alpha zip
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ride-studio-windows-x64
+          path: studio/release/*.zip
+          retention-days: 14
