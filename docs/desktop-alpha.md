@@ -42,7 +42,10 @@ with `STUDIO_FFMPEG` / `STUDIO_FFPROBE`.
 
 Missing Python, FFprobe or ExifTool during camera import now identifies the tool and a
 setup action. Windows runtime environments need both Pillow and the pinned `tzdata`;
-install `requirements-runtime.txt` or rerun the setup script.
+install `requirements-runtime.txt` or rerun the setup script. FFprobe 9 can join duplicate
+MOV recording-time tags: the importer accepts them only when every explicit timestamp
+identifies the same UTC instant. Conflicting or timezone-free container timestamps stay
+unplaced and need an explicit recording time or manual pin.
 
 ## Using the application
 

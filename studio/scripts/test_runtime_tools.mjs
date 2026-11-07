@@ -18,7 +18,7 @@ const loader = await createServer({ root: studio, configFile: false, server: { m
 let backend;
 try {
   const video = join(temp, 'synthetic.mp4');
-  execFileSync(realFfmpeg, ['-v', 'error', '-f', 'lavfi', '-i', 'color=size=160x90:rate=30', '-t', '1', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-metadata', 'creation_time=2026-07-01T12:00:00Z', video]);
+  execFileSync(realFfmpeg, ['-v', 'error', '-f', 'lavfi', '-i', 'color=size=160x90:rate=30', '-t', '1', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-movflags', 'use_metadata_tags', '-metadata', 'creation_time=2026-07-01T12:00:00Z', video]);
   const bytes = readFileSync(video);
   const sha = createHash('sha256').update(bytes).digest('hex');
   const { startDesktopServer } = await loader.ssrLoadModule('/server/desktopServer.ts');
@@ -50,6 +50,7 @@ try {
   const { rideId } = await camera.json();
   const media = await post(`/api/media?rideId=${rideId}&name=existing-ride.mp4`);
   assert.equal(media.status, 201, await media.clone().text());
+  assert.equal((await media.json()).recordedUtc, '2026-07-01T12:00:00.000Z');
   const invalid = await post('/api/cameras?name=invalid-zone.mp4&timezone=Invalid%2FZone');
   assert.equal(invalid.status, 400);
   assert.match(await invalid.text(), /Invalid\/Zone/);
