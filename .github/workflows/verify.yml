@@ -70,7 +70,7 @@ jobs:
       - name: Whitespace and dependency audit
         run: |
           runuser -u node -- git diff --check
-          runuser -u node -- npm --prefix studio audit --audit-level=high
+          runuser -u node -- node studio/scripts/check_audit.mjs
           runuser -u node -- node studio/scripts/check_licenses.mjs
   windows:
     runs-on: windows-latest
@@ -161,7 +161,7 @@ jobs:
         run: |
           git diff --check
           if ($LASTEXITCODE -ne 0) { throw 'Whitespace check failed' }
-          npm --prefix studio audit --audit-level=high
+          node studio/scripts/check_audit.mjs
           if ($LASTEXITCODE -ne 0) { throw 'Dependency audit failed' }
           node studio/scripts/check_licenses.mjs
           if ($LASTEXITCODE -ne 0) { throw 'License policy failed' }
