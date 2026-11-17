@@ -70,5 +70,5 @@ jobs:
       - name: Whitespace and dependency audit
         run: |
           runuser -u node -- git diff --check
-          runuser -u node -- npm --prefix studio audit --audit-level=high
+          runuser -u node -- node studio/scripts/check_audit.mjs
           runuser -u node -- node studio/scripts/check_licenses.mjs
