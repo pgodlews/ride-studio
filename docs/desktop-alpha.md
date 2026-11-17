@@ -119,6 +119,27 @@ installation, real recordings/devices, Intel Quick Sync and NVIDIA Windows hardw
 long media/drift, disk-full recovery, full privacy/DPI/input matrices and SmartScreen.
 Python 3.12 was used for the reported manual Windows tests. Windows remains experimental.
 
+## Windows 11 testing on 17 November 2026
+
+Commit `effa32a` on Windows 11 Pro (AMD Ryzen 7 with Radeon 780M graphics, no NVIDIA
+or Intel GPU) that already had Node.js 26 installed, so this was not a clean machine.
+`scripts/setup-windows.ps1` was run under Windows PowerShell 5.1. It installed Python
+3.13.17, FFmpeg 9.0.2 (Gyan) and ExifTool 13.64 with winget, but failed its Pillow/timezone
+check because 5.1 strips the check's embedded double quotes. It also upgraded the existing
+Node.js despite its comment. With both fixed, the script completed and skipped the
+installed packages.
+
+Every Windows CI step passed locally, including the reference/parity suites with
+`requirements.txt` installed, all thirteen Windows regression suites, the development
+smoke and the extracted-ZIP smoke from a path with spaces and non-ASCII characters.
+`foot_widgets` and `astra_review`, which CI had run only on Linux, also passed once the
+POSIX-only non-executable `ffmpeg` check was skipped on Windows, and they now run in
+Windows CI. There, `astra_review` exposed that stopping FFmpeg ended only a package-manager
+shim (Chocolatey, Scoop), leaving the real FFmpeg running and the job pending. Exports
+now end the whole process tree on Windows. Both smoke exports selected `h264_amf`; NVENC and Quick Sync failed their
+probes as expected. A 20-second 1080p30 AMF encode had 600 High-profile frames and
+decoded fully. GUI interaction, real recordings and devices remain untested on Windows.
+
 ## Validation recorded on 30 October 2026 (Linux)
 
 Manual, on Ubuntu 24.04 x64 with AppArmor user-namespace restriction, an NVIDIA RTX 3090 and the distribution FFmpeg 6.1.1: the development smoke, the installed `.deb` smoke (setuid sandbox active, no `--no-sandbox`) and the extracted archive smoke after its README step each completed the 30-frame 1080 × 1920 export with full decode, selecting `h264_nvenc`; `STUDIO_VIDEO_ENCODER=libx264` also passed. The extracted archive refused to start before its README step, as documented. A real ride (Varia Vue 2688 × 2160 HEVC front footage and an Edge FIT, imported through the TypeScript importer) exported three 10-second passages through the installed application: 900 frames, 30.0 s, 1080 × 1920 H.264/AAC in 71 s, full decode clean, HUD values identical to the FIT at the sampled times and the camera clock within one second of the FIT at both ends of the ride. The full Gitea workflow passed when run locally in its `node:24-trixie` container; it has not yet run on a Gitea or GitHub runner.

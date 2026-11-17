@@ -96,8 +96,11 @@ try {
     process.env.PATH = emptyBin;
     await assert.rejects(ffmpeg(['-version'], 1, { log: [] }), /ENOENT/);
     await assert.rejects(probeOutput('unused'), /ENOENT/);
-    writeFileSync(join(emptyBin, 'ffmpeg'), '#!/bin/sh\nexit 0\n', { mode: 0o644 });
-    await assert.rejects(ffmpeg(['-version'], 1, { log: [] }), /EACCES/);
+    // Windows has no execute permission bit to withhold, so a non-executable ffmpeg is POSIX-only.
+    if (process.platform !== 'win32') {
+      writeFileSync(join(emptyBin, 'ffmpeg'), '#!/bin/sh\nexit 0\n', { mode: 0o644 });
+      await assert.rejects(ffmpeg(['-version'], 1, { log: [] }), /EACCES/);
+    }
   } finally { process.env.PATH = originalPath; }
   const canceled = ffmpeg(['-v', 'error', '-re', '-f', 'lavfi', '-i', 'color=size=32x32:rate=30', '-f', 'null', '-'], 1, { log: [] });
   const cancelCheck = assert.rejects(canceled, /ffmpeg.*(?:stopped|exited)/);
