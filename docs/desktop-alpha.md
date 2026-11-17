@@ -134,7 +134,9 @@ Every Windows CI step passed locally, including the reference/parity suites with
 smoke and the extracted-ZIP smoke from a path with spaces and non-ASCII characters.
 `foot_widgets` and `astra_review`, which CI had run only on Linux, also passed once the
 POSIX-only non-executable `ffmpeg` check was skipped on Windows, and they now run in
-Windows CI. Both smoke exports selected `h264_amf`; NVENC and Quick Sync failed their
+Windows CI. There, `astra_review` exposed that stopping FFmpeg ended only a package-manager
+shim (Chocolatey, Scoop), leaving the real FFmpeg running and the job pending. Exports
+now end the whole process tree on Windows. Both smoke exports selected `h264_amf`; NVENC and Quick Sync failed their
 probes as expected. A 20-second 1080p30 AMF encode had 600 High-profile frames and
 decoded fully. GUI interaction, real recordings and devices remain untested on Windows.
 
