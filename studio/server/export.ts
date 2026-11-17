@@ -39,7 +39,16 @@ export interface Job {
 const jobs: Map<string, Job> = ((globalThis as { __studioJobs?: Map<string, Job> }).__studioJobs ??= new Map());
 export const getJob = (id: string) => jobs.get(id);
 const processes = new Set<ReturnType<typeof spawn>>();
-export function stopExports() { for (const process of processes) process.kill('SIGTERM'); }
+export function stopExports() { for (const p of processes) stopProcess(p, 'SIGTERM'); }
+
+/**
+ * On Windows `ffmpeg` on PATH may be a package-manager shim (Chocolatey, Scoop) that runs the real ffmpeg.exe as
+ * a child sharing its pipes. Killing only the shim leaves FFmpeg running and 'close' never fires, so end the tree.
+ */
+function stopProcess(p: ReturnType<typeof spawn>, signal: NodeJS.Signals) {
+  if (process.platform !== 'win32' || p.pid === undefined) { p.kill(signal); return; }
+  spawn('taskkill', ['/PID', String(p.pid), '/T', '/F'], { stdio: 'ignore', windowsHide: true }).once('error', () => p.kill(signal));
+}
 
 export function startExport(paths: StudioPaths, body: { project: Project }, origin: string): string {
   const id = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
@@ -293,7 +302,7 @@ export function ffmpeg(args: string[], seconds: number, job: Job, feed?: (write:
         // A closed pipe means FFmpeg is already ending; any other failure stops it.
         if (e?.code === 'EPIPE' || e?.code === 'ERR_STREAM_DESTROYED' || p.exitCode !== null || p.signalCode !== null) return;
         feedError = e;
-        p.kill('SIGKILL');
+        stopProcess(p, 'SIGKILL');
       });
     }
     p.stdout!.on('data', (d: Buffer) => {
