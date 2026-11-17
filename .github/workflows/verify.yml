@@ -137,7 +137,7 @@ jobs:
           }
       - name: Windows backend, editing and export regressions
         run: |
-          foreach ($suite in 'desktop_server', 'runtime_tools', 'editor_ui', 'garmin_preview', 'encoder_fallback', 'activity_studio', 'gpx_studio', 'dji_studio', 'camera_studio', 'phone_studio', 'photo_studio', 'media_studio', 'usb_mtp') {
+          foreach ($suite in 'desktop_server', 'runtime_tools', 'editor_ui', 'garmin_preview', 'encoder_fallback', 'activity_studio', 'gpx_studio', 'dji_studio', 'camera_studio', 'phone_studio', 'photo_studio', 'media_studio', 'usb_mtp', 'foot_widgets', 'astra_review') {
             node "studio/scripts/test_${suite}.mjs"
             if ($LASTEXITCODE -ne 0) { throw "Regression failed: $suite" }
           }
