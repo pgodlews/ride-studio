@@ -9,9 +9,10 @@ if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
   throw 'winget not found. Install "App Installer" from the Microsoft Store, then rerun this script.'
 }
 foreach ($id in 'OpenJS.NodeJS.LTS', 'Python.Python.3.13', 'Gyan.FFmpeg', 'OliverBetz.ExifTool') {
-  # Already-installed packages are left as they are.
-  winget install --id $id --exact --silent --accept-package-agreements --accept-source-agreements
-  if ($LASTEXITCODE -ne 0 -and $LASTEXITCODE -ne -1978335189) { throw "winget install $id failed ($LASTEXITCODE)" }
+  # Already-installed packages are left as they are: without --no-upgrade, winget install upgrades them.
+  winget install --id $id --exact --silent --no-upgrade --accept-package-agreements --accept-source-agreements
+  # 0x8A150061: already installed (skipped by --no-upgrade); 0x8A15002B: no newer version available.
+  if ($LASTEXITCODE -ne 0 -and $LASTEXITCODE -ne -1978335135 -and $LASTEXITCODE -ne -1978335189) { throw "winget install $id failed ($LASTEXITCODE)" }
 }
 # winget updates PATH for new shells only; pick up the new tools in this one.
 $env:Path = [Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' + [Environment]::GetEnvironmentVariable('Path', 'User')
@@ -30,7 +31,8 @@ if (-not (Test-Path $Python)) {
 }
 & $Python -m pip install -r (Join-Path $Root 'requirements-runtime.txt')
 if ($LASTEXITCODE -ne 0) { throw 'pip install failed' }
-& $Python -c 'import PIL; from zoneinfo import ZoneInfo; ZoneInfo("Europe/London")'
+# Windows PowerShell 5.1 strips embedded double quotes from native arguments; keep Python strings single-quoted.
+& $Python -c 'import PIL; from zoneinfo import ZoneInfo; ZoneInfo(''Europe/London'')'
 if ($LASTEXITCODE -ne 0) { throw 'Python Pillow/timezone runtime check failed' }
 
 npm --prefix (Join-Path $Root 'studio') ci
