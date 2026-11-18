@@ -138,7 +138,19 @@ Windows CI. There, `astra_review` exposed that stopping FFmpeg ended only a pack
 shim (Chocolatey, Scoop), leaving the real FFmpeg running and the job pending. Exports
 now end the whole process tree on Windows. Both smoke exports selected `h264_amf`; NVENC and Quick Sync failed their
 probes as expected. A 20-second 1080p30 AMF encode had 600 High-profile frames and
-decoded fully. GUI interaction, real recordings and devices remain untested on Windows.
+decoded fully.
+
+On 18 November the development build's screens were driven on the same PC (1920 × 1080
+at 150 % display scaling) through Electron's remote-debugging port, with native dialogs
+checked on screen. Activities (GPX import, invalid Apple Health folder), Widgets (families,
+units, themes, aspect ratios, add/drag/resize, opacity, scrubbing), the Editor (Auto-edit's
+explanations, manual clips, video and photo import, Map with OpenStreetMap tiles, Pin Sync,
+the Save As download), the File menu, **Check setup…** and closing during idle all worked
+with synthetic inputs. Two GUI exports (12 s 1:1, and 65 s 9:16 mixing a still and a video
+with camera audio) used `h264_amf` and decoded fully. The editor had rendered at 100 % on
+the 150 % display because the app forced a device scale factor of 1; Windows now keeps
+the display's scaling, and a re-export was identical (SSIM 1.000000). Real recordings and
+devices, other DPI settings and keyboard-only use remain untested on Windows.
 
 ## Validation recorded on 30 October 2026 (Linux)
 

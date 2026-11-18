@@ -23,4 +23,6 @@ const pkg = JSON.parse(readFileSync(join(studio, 'package.json')));
 writeFileSync(join(out, 'package.json'), JSON.stringify({ name: 'ride-studio', version: pkg.version, main: 'main.cjs', description: 'Local cycling and outdoor video studio', license: 'MIT', author: 'Piotr Godlewski' }, null, 2));
 for (const name of ['LICENSE', 'THIRD_PARTY_NOTICES.md']) cpSync(join(studio, '..', name), join(out, name));
 for (const name of ['OSVPLAT-LICENSE']) cpSync(join(studio, 'scripts', name), join(out, 'scripts', name));
+// Window and taskbar icon for `npm run desktop`; packaging copies the same file.
+cpSync(join(studio, 'desktop/icon.png'), join(out, 'icon.png'));
 console.log('Built desktop-dist: production UI + HUD + bundled Electron main/backend; personal data excluded.');
