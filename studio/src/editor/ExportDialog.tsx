@@ -89,7 +89,7 @@ export function ExportDialog({ project, onClose, onFormat }: { project: Project;
                 <video src={job.url} controls playsInline />
                 <div>
                   <a className="primary" href={job.url} download>Download MP4</a>
-                  <code title="Saved on this Mac">{job.output}</code>
+                  <code title="Saved on this computer">{job.output}</code>
                   {job.checks && <small>{`${job.checks.width}×${job.checks.height} · ${job.checks.frames} frames · ${Number(job.checks.seconds).toFixed(2)} s · ${job.checks.sizeMB} MB · took ${Math.round(((job.finishedAt ?? 0) - job.startedAt) / 1000)} s`}</small>}
                 </div>
               </div>

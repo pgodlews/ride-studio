@@ -19,7 +19,9 @@ if (process.platform === 'win32') app.setAppUserModelId('com.piotrgodlewski.ride
 const profile = process.argv.find((a) => a.startsWith('--profile='))?.slice(10);
 if (profile) app.setPath('userData', resolve(profile));
 if (!app.requestSingleInstanceLock()) app.quit();
-app.commandLine.appendSwitch('force-device-scale-factor', '1');
+// HUD capture windows set their own offscreen scale factor of 1. Windows keeps the display's scaling (often 125–150 %)
+// for the editor, which a global factor of 1 would render at two-thirds size.
+if (process.platform !== 'win32') app.commandLine.appendSwitch('force-device-scale-factor', '1');
 // Captured HUD frames pass through /dev/shm; containers often mount only 64 MB, which fails capture with UnknownVizError.
 if (process.platform === 'linux') {
   try { const shm = statfsSync('/dev/shm'); if (shm.bavail * shm.bsize < 512 * 2 ** 20) app.commandLine.appendSwitch('disable-dev-shm-usage'); }

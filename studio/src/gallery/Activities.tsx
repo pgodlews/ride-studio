@@ -211,7 +211,7 @@ function AppleHealthPanel({ onImported }: { onImported: (text: string, rideId: s
       <h3>Apple Health export</h3>
       <p className="hint">Export from the Health app (profile → Export All Health Data), unzip, and enter the folder. Apple Watch workouts with a route can be imported; the export is only read.</p>
       <div className="apple-row">
-        <input aria-label="Apple Health export folder" placeholder="/Users/you/Downloads/apple_health_export" value={path} onChange={(e) => setPath(e.target.value)} />
+        <input aria-label="Apple Health export folder" placeholder={navigator.userAgent.includes('Windows') ? 'C:\\Users\\you\\Downloads\\apple_health_export' : '/Users/you/Downloads/apple_health_export'} value={path} onChange={(e) => setPath(e.target.value)} />
         <button className="primary" disabled={!path || !!busy} onClick={() => void scan()}>{result ? 'Rescan' : 'Scan export'}</button>
       </div>
       {busy && <div className="banner">{busy}</div>}
